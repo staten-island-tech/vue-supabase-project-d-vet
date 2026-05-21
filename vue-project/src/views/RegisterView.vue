@@ -1,0 +1,1 @@
+<!-- here do simple functions about the password length and symbols and whatnot. Add a sort of empty something to stand for the email, name whatnot -->
