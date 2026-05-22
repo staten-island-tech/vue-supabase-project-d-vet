@@ -7,6 +7,7 @@
         <button @click="goBack">⬑</button>
         <h3>{{ title }}</h3>
     </header>
+    
 </div>
 </template>
 
