@@ -20,7 +20,7 @@
 import { ref }
 from 'vue'
 import { supabase }
-from '@/services/supabase'
+from '@/supabase'
 const title = ref('')
 const price = ref('')
 const location = ref('')
