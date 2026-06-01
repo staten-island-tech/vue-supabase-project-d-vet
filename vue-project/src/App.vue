@@ -27,6 +27,8 @@ onMounted(async () => {
 
 </script>
 
-<style scoped>
-
-</style>
+<template>
+  <ul>
+    <li v-for="todo in todos" :key="todo.id">{{ todo.name }}</li>
+  </ul>
+</template>
