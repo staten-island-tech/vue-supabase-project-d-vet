@@ -28,7 +28,7 @@
 import { ref } from "vue"
 import { createClient } from "@supabase/supabase-js"
 const supabaseUrl = "https://oxyotgdlkktbqwpkremj.supabase.co"
-const supabaseKey = "YOUR_SUPABASE_ANON_KEY"
+const supabaseKey = "sb_publishable__Wh7v9WbfDZymXwdcEnXGA_YyIOFVMa"
 const supabase = createClient(supabaseUrl, supabaseKey)
 const username = ref("")
 const password = ref("")
