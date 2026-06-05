@@ -1,18 +1,10 @@
-<script setup>
- import { ref, onMounted } from 'vue'
- import { supabase } from './supabase'
-
- const todos = ref([])
- async function getTodos() {
-   const { data } = await supabase.from('todos').select()
-  todos.value = data
-  }
-  onMounted(() => {
-    getTodos()
-  })
-</script>
 <template>
-  <ul>
-    <li v-for="todo in todos" :key="todo.id">{{ todo.name }}</li>
-  </ul>
+  <router-view />
 </template>
+
+<script setup>
+</script>
+
+<style>
+html,body,#app { height:100%; margin:0; background:#071027; color:#e6eef6; }
+</style>
