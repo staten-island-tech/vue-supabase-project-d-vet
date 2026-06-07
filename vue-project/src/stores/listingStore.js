@@ -3,7 +3,7 @@ from 'pinia'
 import { ref }
 from 'vue'
 import { supabase }
-from '@/services/supabase'
+from '@/supabase'
 export const useListingStore =
 defineStore('listingStore', () => {
   const listings = ref([])

@@ -1,103 +1,209 @@
 <template>
-  <div class="h-screen flex">
-    <!-- LEFT SIDEBAR -->
-    <aside class="w-[15%] min-w-[220px] bg-orange-200 p-6 flex flex-col">
-      <h2 class="text-2xl font-bold text-orange-700 mb-6">Filters</h2>
+  <div class="page">
+    <div class="sidebar">
+      <h2>Filters</h2>
 
-      <div class="mt-4">
-        <p class="text-orange-700 font-semibold mb-2">Max Price</p>
+      <div class="price-filter">
+        <label>Max Price</label>
 
-        <!-- GSAP Slider Goes Here -->
-        <div id="slider-container" class="relative mt-8">
-          <div class="w-full h-3 bg-white rounded-full shadow">
-            <div id="slider-fill" class="h-3 bg-orange-500 rounded-full"></div>
-          </div>
-
-          <div
-            id="slider-handle"
-            class="absolute top-[-10px] w-8 h-8 bg-white rounded-full shadow-lg cursor-pointer"
-          ></div>
+        <div id="slider-track">
+          <div id="slider-fill"></div>
+          <div id="slider-handle"></div>
         </div>
 
-        <p class="mt-4 text-orange-700 font-bold">${{ maxPrice.toLocaleString() }}</p>
+        <p>${{ maxPrice.toLocaleString() }}</p>
       </div>
-    </aside>
 
-    <!-- RIGHT CONTENT -->
-    <main class="w-[85%] bg-orange-600 p-8 overflow-y-auto">
-      <div class="grid grid-cols-4 gap-6">
-        <div
-          v-for="listing in listings"
-          :key="listing.id"
-          class="bg-white rounded-2xl p-5 shadow-lg hover:shadow-xl transition"
-        >
-          <h3 class="text-orange-600 text-xl font-bold">
-            {{ listing.title }}
-          </h3>
+      <button class="apply-filters-button" @click="applyFilters">
+        Apply Filters
+      </button>
+    </div>
 
-          <p class="text-orange-500 mt-2">
-            {{ listing.description }}
-          </p>
-
-          <p class="mt-4 text-2xl font-bold text-orange-700">${{ listing.price }}</p>
-        </div>
+    <div class="listings">
+      <div v-if="filteredListings.length === 0" class="no-results">
+        No listings found for those settings.
       </div>
-    </main>
+      <div v-else v-for="listing in filteredListings" :key="listing.id" class="card">
+        <h3>{{ listing.title }}</h3>
+        <p>{{ listing.description }}</p>
+        <h4>${{ listing.price }}</h4>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
+
 import { ref, onMounted } from 'vue'
-import { gsap } from 'gsap'
+import { useListingStore } from '@/stores/listingStore'
+import gsap from 'gsap'
 import Draggable from 'gsap/Draggable'
-
-const listings = ref([
-  {
-    id: 1,
-    title: 'Gaming Laptop',
-    description: 'RTX graphics card',
-    price: 600
-  },
-  {
-    id: 2,
-    title: 'iPhone',
-    description: 'Excellent condition',
-    price: 400
-  },
-  {
-    id: 3,
-    title: 'Bicycle',
-    description: 'Mountain bike',
-    price: 250
-  }
-])
-
 
 gsap.registerPlugin(Draggable)
 
+const listingStore = useListingStore()
+const listings = listingStore.listings
+const filteredListings = ref([])
 const maxPrice = ref(50000)
 
-onMounted(() => {
-  const trackWidth = document.getElementById('slider-container').offsetWidth
+const applyFilters = () => {
+  filteredListings.value = listings.value.filter((listing) => {
+    return Number(listing.price) <= maxPrice.value
+  })
+}
+
+onMounted(async () => {
+  await listingStore.fetchListings()
+  filteredListings.value = listings.value
+
+  gsap.from('.card', {
+    duration: 0.8,
+    opacity: 0,
+    y: 50,
+    stagger: 0.1,
+    ease: 'power2.out',
+  })
+
+  const track = document.getElementById('slider-track')
+  const fill = document.getElementById('slider-fill')
+  const handle = document.getElementById('slider-handle')
+  const width = track.offsetWidth
+
+  const initialPercent = maxPrice.value / 99999
+  fill.style.width = `${initialPercent * 100}%`
+  handle.style.transform = `translateX(${Math.round(initialPercent * (width - 26))}px)`
 
   Draggable.create('#slider-handle', {
     type: 'x',
-    bounds: {
-      minX: 0,
-      maxX: trackWidth - 32,
-    },
-
+    bounds: { minX: 0, maxX: width - 26 },
     onDrag() {
-      const percent = this.x / (trackWidth - 32)
-
+      const percent = this.x / (width - 26)
       maxPrice.value = Math.round(percent * 99999)
-
-      gsap.set('#slider-fill', {
-        width: this.x + 16,
-      })
+      fill.style.width = `${percent * 100}%`
     },
   })
+
+  gsap.from('.sidebar', { x: -200, duration: 1 })
+  gsap.from('.listings', { opacity: 0, duration: 1.2 })
 })
+
 </script>
 
-<style scoped></style>
+<style scoped>
+#slider-track {
+  width: 100%;
+  height: 12px;
+
+  background: white;
+
+  border-radius: 50px;
+
+  position: relative;
+
+  margin-top: 30px;
+}
+
+#slider-fill {
+  width: 0;
+
+  height: 100%;
+
+  background: orange;
+
+  border-radius: 50px;
+}
+
+#slider-handle {
+  width: 26px;
+  height: 26px;
+
+  background: white;
+
+  border-radius: 50%;
+
+  position: absolute;
+
+  top: -7px;
+
+  left: 0;
+
+  cursor: grab;
+
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+}
+.price-filter label,
+.price-filter p {
+  color: #ff7a00;
+  font-weight: 700;
+}
+.page {
+  display: flex;
+  height: 100vh;
+}
+
+.sidebar {
+  width: 15%;
+  background-color: #ffd7a3;
+  padding: 20px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.apply-filters-button {
+  width: 100%;
+  padding: 12px 16px;
+  margin-top: 20px;
+  border: none;
+  border-radius: 12px;
+  background: #d35400;
+  color: white;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.apply-filters-button:hover {
+  background: #bf4400;
+  transform: translateY(-1px);
+}
+
+.no-results {
+  color: white;
+  font-weight: 700;
+}
+
+.listings {
+  width: 85%;
+  background-color: #d35400;
+
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+
+  gap: 20px;
+
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.card {
+  background: white;
+
+  border-radius: 18px;
+
+  padding: 20px;
+
+  color: #d35400;
+
+  min-height: 180px;
+
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+
+  transition: transform 0.2s;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+}
+</style>

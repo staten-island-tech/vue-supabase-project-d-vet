@@ -10,13 +10,18 @@
       <h2>{{ listing.title }}</h2>
       <p class="price">${{ listing.price }}</p>
       <p>{{ listing.location }}</p>
+      <p class="created" v-if="createdAt">Added: {{ createdAt }}</p>
     </div>
   </div>
 </template>
 
 <script setup>
-defineProps({
-  listing: Object
+import { computed } from 'vue'
+const props = defineProps({ listing: Object })
+
+const createdAt = computed(() => {
+  const val = props.listing?.created_at
+  return val ? new Date(val).toLocaleString() : ''
 })
 
 </script>
