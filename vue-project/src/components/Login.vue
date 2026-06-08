@@ -1,7 +1,7 @@
 <template>
-  <div class="register-container">
-    <form class="register-form" @submit.prevent="register">
-      <h2>Create Account</h2>
+  <div class="login-container">
+    <form class="login-form" @submit.prevent="login">
+      <h2>Sign In</h2>
       <input
         v-model="username"
         type="email"
@@ -15,7 +15,7 @@
         required
       />
       <button type="submit" :disabled="loading">
-        {{ loading ? "Creating..." : "Register" }}
+        {{ loading ? "Signing in..." : "Sign In" }}
       </button>
       <p v-if="message" class="message">
         {{ message }}
@@ -32,29 +32,38 @@ const username = ref("")
 const password = ref("")
 const loading = ref(false)
 const message = ref("")
-const register = async () => {
+
+const login = async () => {
   loading.value = true
   message.value = ""
 
-  const { error } = await supabase.auth.signUp({
-    email: username.value,
-    password: password.value,
-  })
+  try {
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: username.value,
+      password: password.value,
+    })
 
-  if (error) {
-    message.value = error.message
-  } else {
-    message.value = "Registration successful"
-    username.value = ""
-    password.value = ""
+    if (error) {
+      message.value = error.message
+    } else {
+      if (data?.user || data?.session) {
+        message.value = "Login successful"
+        username.value = ""
+        password.value = ""
+      } else {
+        message.value = "Check your email for a login link or confirm your account if required."
+      }
+    }
+  } catch (err) {
+    message.value = err?.message ?? String(err)
+  } finally {
+    loading.value = false
   }
-
-  loading.value = false
 }
 </script>
 
 <style scoped>
-.register-container {
+.login-container {
   position: fixed;
   inset: 0;
   display: flex;
