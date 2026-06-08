@@ -19,15 +19,17 @@
       </button>
       <p v-if="message" class="message">
         {{ message }}
-      </p>
+     </p>
     </form>
   </div>
 </template>
 
 <script setup>
 import { ref } from "vue"
-import { supabase } from "../supabase"
-
+import { createClient } from "@supabase/supabase-js"
+const supabaseUrl = "https://oxyotgdlkktbqwpkremj.supabase.co"
+const supabaseKey = "sb_publishable__Wh7v9WbfDZymXwdcEnXGA_YyIOFVMa"
+const supabase = createClient(supabaseUrl, supabaseKey)
 const username = ref("")
 const password = ref("")
 const loading = ref(false)
@@ -60,5 +62,71 @@ const register = async () => {
   display: flex;
   justify-content: center;
   align-items: center;
+}
+
+.register-form {
+  width: 100%;
+  max-width: 420px;
+  background: white;
+  padding: 2rem;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.register-form h2 {
+  text-align: center;
+  margin-bottom: 1rem;
+  color: #111827;
+  font-size: 2rem;
+}
+
+.register-form input {
+  padding: 1rem;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  font-size: 1rem;
+  outline: none;
+  transition: 0.2s;
+}
+
+.register-form input:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+.register-form button {
+  padding: 1rem;
+  border: none;
+  border-radius: 10px;
+  background: #3b82f6;
+  color: white;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.register-form button:hover {
+  background: #2563eb;
+}
+
+.register-form button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.message {
+  text-align: center;
+  color: #374151;
+  font-size: 0.95rem;
+}
+
+@media (max-width: 500px) {
+  .register-form {
+    margin: 1rem;
+    padding: 2rem;
+  }
 }
 </style>
