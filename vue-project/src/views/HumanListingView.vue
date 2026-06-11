@@ -1,5 +1,8 @@
 <template>
   <div class="page">
+    <header class="top">
+      <button type="button" class="brand" @click="goHome">Thung Ho</button>
+    </header>
     <div class="sidebar">
       <h2>Filters</h2>
 
@@ -35,6 +38,7 @@
 <script setup>
 
 import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { useListingStore } from '@/stores/listingStore'
 import gsap from 'gsap'
 import Draggable from 'gsap/Draggable'
@@ -51,6 +55,9 @@ const applyFilters = () => {
     return Number(listing.price) <= maxPrice.value
   })
 }
+
+const router = useRouter()
+function goHome() { router.push({ name: 'home' }).catch(() => {}) }
 
 onMounted(async () => {
   await listingStore.fetchListings()
@@ -206,4 +213,6 @@ onMounted(async () => {
 .card:hover {
   transform: translateY(-5px);
 }
+.top{ display:flex; justify-content:flex-end; padding:12px 16px; }
+.brand{ font-weight:700; font-size:18px; color:#fff; background:transparent; border:none; cursor:pointer; }
 </style>

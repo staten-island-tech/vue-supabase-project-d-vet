@@ -2,13 +2,24 @@
   <div class="home">
     <header class="top">
       <div class="brand">Thung Ho</div>
+      <!--
       <div class="search">
         <input v-model="q" @keyup.enter="fetchListings" placeholder="Search items..." />
         <button @click="fetchListings">Search</button>
       </div>
+      -->
       <button class="login" @click="goLogin">Sign in</button>
     </header>
+    
     <main class="content">
+      <section class="big-buttons">
+        <div class="button-grid">
+          <button class="big-btn" @click="goRegister">Sign Up</button>
+          <button class="big-btn" @click="goLogin">Login</button>
+          <button class="big-btn" @click="goView">View</button>
+          <button class="big-btn" @click="goCreate">Post</button>
+        </div>
+      </section>
       <section class="grid">
         <div v-if="loading" class="empty">Loading...</div>
         <div v-else-if="filtered.length === 0" class="empty">No items found.</div>
@@ -63,8 +74,11 @@ function openItem(item) {
   router.push({ name: 'Listing', params: { id: item.id } }).catch(() => {})
 }
 function goLogin() {
-  router.push({ name: 'Login' }).catch(() => {})
+  router.push({ name: 'login' }).catch(() => {})
 }
+function goRegister() { router.push({ name: 'register' }).catch(() => {}) }
+function goView() { router.push({ name: 'human-listing' }).catch(() => {}) }
+function goCreate() { router.push({ name: 'create-listing' }).catch(() => {}) }
 onMounted(fetchListings)
 </script>
 
@@ -91,4 +105,9 @@ onMounted(fetchListings)
 .price{ color:#7ef6d0; font-weight:700; }
 .empty{ text-align:center; color:var(--muted); padding:24px; }
 @media (max-width:700px){ .grid{ grid-template-columns:1fr; } }
+
+.big-buttons{ padding:18px; }
+.button-grid{ display:grid; grid-template-columns:1fr 1fr; gap:18px; max-width:900px; margin:0 auto 18px; }
+.big-btn{ background:#d35400; color:#fff; padding:36px 12px; font-size:20px; font-weight:800; border-radius:12px; border:none; cursor:pointer; }
+@media (max-width:700px){ .button-grid{ grid-template-columns:1fr; } }
 </style>

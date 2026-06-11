@@ -1,5 +1,8 @@
 <template>
   <div class="register-container">
+    <header class="top">
+      <button type="button" class="brand" @click="goHome">Thung Ho</button>
+    </header>
     <form class="register-form" @submit.prevent="register">
       <h2>Create Account</h2>
       <input
@@ -26,6 +29,7 @@
 
 <script setup>
 import { ref } from "vue"
+import { useRouter } from 'vue-router'
 import { createClient } from "@supabase/supabase-js"
 const supabaseUrl = "https://oxyotgdlkktbqwpkremj.supabase.co"
 const supabaseKey = "sb_publishable__Wh7v9WbfDZymXwdcEnXGA_YyIOFVMa"
@@ -53,6 +57,8 @@ const register = async () => {
 
   loading.value = false
 }
+const router = useRouter()
+function goHome() { router.push({ name: 'home' }).catch(() => {}) }
 </script>
 
 <style scoped>
@@ -63,6 +69,9 @@ const register = async () => {
   justify-content: center;
   align-items: center;
 }
+
+.top{ display:flex; justify-content:flex-end; padding:12px 16px; width:100%; position:fixed; top:0; left:0; }
+.brand{ font-weight:700; font-size:18px; color:#fff; background:transparent; border:none; cursor:pointer; }
 
 .register-form {
   width: 100%;
