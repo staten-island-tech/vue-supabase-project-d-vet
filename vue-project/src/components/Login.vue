@@ -1,32 +1,21 @@
 <template>
-  <div class="login-container">
-    <header class="top">
-      <button type="button" class="brand" @click="goHome">Thung Ho</button>
-    </header>
-    <form class="login-form" @submit.prevent="login">
-      <h2>Sign In</h2>
-      <input
-        v-model="username"
-        type="email"
-        placeholder="Input Email"
-        required
-      />
-      <input
-        v-model="password"
-        type="password"
-        placeholder="Input Password"
-        required
-      />
-      <button type="submit" :disabled="loading">
-        {{ loading ? "Signing in..." : "Sign In" }}
-      </button>
-      <p v-if="message" class="message">
-        {{ message }}
-      </p>
+  <div class="login-wrap">
+    <form class="card" @submit.prevent="login">
+      <h2>Sign in</h2>
+      <input v-model="email" type="email" placeholder="Email" required autocomplete="username" />
+      <input v-model="password" type="password" placeholder="Password" required autocomplete="current-password" />
+      <button type="submit" :disabled="loading">{{ loading ? 'Signing in...' : 'Sign in' }}</button>
+      <p v-if="error" class="error">{{ error }}</p>
+      <p v-if="info" class="info">{{ info }}</p>
+      <div class="row">
+        <button type="button" class="link" @click="sendSignInLink" :disabled="sendingLink">
+          {{ sendingLink ? 'Sending link...' : 'Send sign-in link' }}
+        </button>
+        <router-link to="/register">Create account</router-link>
+      </div>
     </form>
   </div>
 </template>
-
 <script setup>
 import { ref } from "vue"
 import { useRouter } from 'vue-router'
@@ -34,50 +23,103 @@ import { supabase } from "../supabase"
 
 const router = useRouter()
 function goHome() { router.push({ name: 'home' }).catch(() => {}) }
-
-const username = ref("")
+const email = ref("")
 const password = ref("")
 const loading = ref(false)
-const message = ref("")
-
-const login = async () => {
+const sendingLink = ref(false)
+const error = ref('')
+const info = ref('')
+async function login() {
+  error.value = ''
+  info.value = ''
   loading.value = true
-  message.value = ""
-
   try {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email: username.value,
+    const { data, error: signInError } = await supabase.auth.signInWithPassword({
+      email: email.value,
       password: password.value,
     })
 
-    if (error) {
-      message.value = error.message
-    } else {
-      if (data?.user || data?.session) {
-        message.value = "Login successful"
-        username.value = ""
-        password.value = ""
-      } else {
-        message.value = "Check your email for a login link or confirm your account if required."
+    if (signInError) {
+      const msg = signInError.message || ''
+      if (/confirm|confirmed|not confirmed/i.test(msg)) {
+        error.value = 'Email not confirmed. You can send a sign-in link below.'
+        info.value = ''
+        loading.value = false
+        return
       }
+      error.value = msg || 'Sign in failed'
+      return
     }
+    info.value = 'Signed in'
+    email.value = ''
+    password.value = ''
+    await router.push('/').catch(() => {})
   } catch (err) {
-    message.value = err?.message ?? String(err)
+    error.value = err?.message ?? String(err)
   } finally {
     loading.value = false
   }
 }
-</script>
-
-<style scoped>
-.login-container {
-  position: fixed;
-  inset: 0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+async function sendSignInLink() {
+  error.value = ''
+  info.value = ''
+  if (!email.value) {
+    error.value = 'Enter your email to receive a sign-in link.'
+    return
+  }
+  sendingLink.value = true
+  try {
+    const { error: otpError } = await supabase.auth.signInWithOtp({ email: email.value })
+    if (otpError) {
+      error.value = otpError.message || 'Unable to send link'
+    } else {
+      info.value = 'Check your email for a sign-in link (also check spam).'
+    }
+  } catch (err) {
+    error.value = err?.message ?? String(err)
+  } finally {
+    sendingLink.value = false
+  }
 }
-
-.top{ display:flex; justify-content:flex-end; padding:12px 16px; width:100%; position:fixed; top:0; left:0; }
-.brand{ font-weight:700; font-size:18px; color:#fff; background:transparent; border:none; cursor:pointer; }
+</script>
+<style scoped>
+.login-wrap {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(180deg,#071023,#05060a);
+  color: #e6eef6;
+  padding: 20px;
+}
+.card {
+  width: 100%;
+  max-width: 420px;
+  padding: 20px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.03);
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.card h2 { margin:0 0 6px 0; }
+input {
+  padding:10px 12px;
+  border-radius:8px;
+  border:1px solid rgba(255,255,255,0.04);
+  background:#0f1724;
+  color:#e6eef6;
+}
+button {
+  padding:10px 12px;
+  border-radius:8px;
+  border:none;
+  background:#06b6d4;
+  color:#042;
+  font-weight:600;
+  cursor:pointer;
+}
+button[disabled]{ opacity:0.7; cursor:default; }
+.row{ display:flex; justify-content:space-between; align-items:center; gap:8px; font-size:0.9rem; color:#94a3b8; }
 </style>
