@@ -2,12 +2,10 @@
   <div class="home">
     <header class="top">
       <div class="brand">Thung Ho</div>
-      <!--
       <div class="search">
         <input v-model="q" @keyup.enter="fetchListings" placeholder="Search items..." />
         <button @click="fetchListings">Search</button>
       </div>
-      -->
       <button class="login" @click="goLogin">Sign in</button>
     </header>
     

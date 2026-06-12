@@ -1,5 +1,8 @@
 <template>
   <div class="login-wrap">
+    <header class="top">
+      <button type="button" class="brand" @click="goHome">Thung Ho</button>
+    </header>
     <form class="card" @submit.prevent="login">
       <h2>Sign in</h2>
       <input v-model="email" type="email" placeholder="Email" required autocomplete="username" />
@@ -91,6 +94,24 @@ async function sendSignInLink() {
   background: linear-gradient(180deg,#071023,#05060a);
   color: #e6eef6;
   padding: 20px;
+  position: relative;
+}
+.top {
+  display: flex;
+  justify-content: flex-end;
+  padding: 12px 16px;
+  width: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+.brand {
+  font-weight: 700;
+  font-size: 18px;
+  color: #fff;
+  background: transparent;
+  border: none;
+  cursor: pointer;
 }
 .card {
   width: 100%;

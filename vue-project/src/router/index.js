@@ -27,6 +27,11 @@ const router = createRouter({
       name: 'human-listing',
       component: HumanListing
     }
+      , { 
+        path: '/CreateListing',
+        name: 'create-listing',
+        component: CreateListing
+       }
   ],
 })
 
