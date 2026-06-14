@@ -89,7 +89,7 @@ function goHome() {
 
 function openItem(item) {
   if (!item?.id) return
-  router.push({ name: 'Listing', params: { id: item.id } }).catch(() => {})
+  router.push({ name: 'listing-detail', params: { id: item.id } }).catch(() => {})
 }
 
 async function loadListings() {

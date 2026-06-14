@@ -69,7 +69,7 @@ const filtered = computed(() => {
 })
 function openItem(item) {
   if (!item?.id) return
-  router.push({ name: 'Listing', params: { id: item.id } }).catch(() => {})
+  router.push({ name: 'home' }).catch(() => {})
 }
 function goLogin() {
   router.push({ name: 'login' }).catch(() => {})

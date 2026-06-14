@@ -62,10 +62,20 @@ async function createListing() {
       // convert datetime-local to ISO string
       payload.created_at = new Date(createdAt.value).toISOString()
     }
+    if (user.email) {
+      payload.poster_email = user.email
+      payload.email = user.email
+    }
 
     const { error } = await supabase.from('listings').insert([payload])
     if (error) {
-      throw error
+      const fallbackPayload = { ...payload }
+      delete fallbackPayload.poster_email
+      delete fallbackPayload.email
+      const { error: fallbackError } = await supabase.from('listings').insert([fallbackPayload])
+      if (fallbackError) {
+        throw fallbackError
+      }
     }
     title.value = ''
     price.value = ''

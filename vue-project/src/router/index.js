@@ -4,6 +4,7 @@ import Register from '@/components/Register.vue'
 import Login from '@/components/Login.vue'
 import CreateListing from '@/views/CreateListingView.vue'
 import HumanListing from '@/views/HumanListingView.vue'
+import ListingDetailView from '@/views/ListingDetailView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -26,12 +27,15 @@ const router = createRouter({
       path: '/HumanListing',
       name: 'human-listing',
       component: HumanListing
+    }, {
+      path: '/listing/:id',
+      name: 'listing-detail',
+      component: ListingDetailView
+    }, {
+      path: '/CreateListing',
+      name: 'create-listing',
+      component: CreateListing
     }
-      , { 
-        path: '/CreateListing',
-        name: 'create-listing',
-        component: CreateListing
-       }
   ],
 })
 
