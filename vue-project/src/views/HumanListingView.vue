@@ -49,35 +49,37 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { useListingStore } from '@/stores/listingStore'
+import { supabase } from '@/supabase'
 import gsap from 'gsap'
 import Draggable from 'gsap/Draggable'
 
 
 gsap.registerPlugin(Draggable)
 
-const listingStore = useListingStore()
-const listings = listingStore.listings
-const filteredListings = ref([])
+const listings = ref([])
 const maxPrice = ref(50000)
 const searchQuery = ref('')
 
-const applyFilters = () => {
+const filteredListings = computed(() => {
   const term = searchQuery.value.trim().toLowerCase()
-  const sourceListings = Array.isArray(listings) ? listings : []
+  const sourceListings = Array.isArray(listings.value) ? listings.value : []
 
-  filteredListings.value = sourceListings.filter((listing) => {
-    const matchesPrice = Number(listing.price) <= maxPrice.value
+  return sourceListings.filter((listing) => {
+    const matchesPrice = Number(listing?.price ?? 0) <= maxPrice.value
     const matchesSearch =
       !term ||
-      (listing.title || '').toLowerCase().includes(term) ||
-      (listing.description || '').toLowerCase().includes(term) ||
-      (listing.location || '').toLowerCase().includes(term)
+      (listing?.title || '').toLowerCase().includes(term) ||
+      (listing?.description || '').toLowerCase().includes(term) ||
+      (listing?.location || '').toLowerCase().includes(term)
 
     return matchesPrice && matchesSearch
   })
+})
+
+const applyFilters = () => {
+  // The list is already filtered reactively from the search text and max price.
 }
 
 const router = useRouter()
@@ -90,9 +92,17 @@ function openItem(item) {
   router.push({ name: 'Listing', params: { id: item.id } }).catch(() => {})
 }
 
+async function loadListings() {
+  const { data, error } = await supabase
+    .from('listings')
+    .select('*')
+    .order('created_at', { ascending: false })
+
+  listings.value = error ? [] : (data ?? [])
+}
+
 onMounted(async () => {
-  await listingStore.fetchListings()
-  applyFilters()
+  await loadListings()
 
   gsap.from('.card', {
     duration: 0.8,
