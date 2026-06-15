@@ -52,7 +52,8 @@ const wishlistStore = useWishlistStore()
 const q = ref('')
 const loading = ref(false)
 
-const wishlistListings = computed(() => wishlistStore.wishlistListings)
+const wishlistListings = wishlistStore.wishlistListings
+/* const wishlistListings = computed(() => wishlistStore.wishlistListings) */
 const wishlistLoading = computed(() => wishlistStore.loading)
 
 async function fetchListings() {

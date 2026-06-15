@@ -78,15 +78,23 @@ async function loadListing() {
 
     if (!error && data) {
       listing.value = data
+      posterEmailValue.value = ''
 
       const ownerId = data.user_id
-      if (ownerId && supabase.auth?.admin?.getUserById) {
-        const { data: userData, error: userError } = await supabase.auth.admin.getUserById(ownerId)
-        if (!userError && userData?.user?.email) {
-          posterEmailValue.value = userData.user.email
-        } else {
-          posterEmailValue.value = data.poster_email || data.email || data.user_email || ''
-        }
+      const currentUserId = authStore.user?.id
+
+      if (ownerId && currentUserId && ownerId === currentUserId && authStore.user?.email) {
+        posterEmailValue.value = authStore.user.email
+      } else if (ownerId) {
+        const profileRequests = [
+          supabase.from('profiles').select('email').eq('id', ownerId).maybeSingle(),
+          supabase.from('profiles').select('email').eq('user_id', ownerId).maybeSingle(),
+        ]
+
+        const results = await Promise.all(profileRequests)
+        const profileEmail = results.find((result) => !result.error && result.data?.email)?.data?.email
+
+        posterEmailValue.value = profileEmail || data.poster_email || data.email || data.user_email || ''
       } else {
         posterEmailValue.value = data.poster_email || data.email || data.user_email || ''
       }
@@ -114,8 +122,12 @@ function goBack() {
 
 watch(() => route.params.id, async () => {
   await loadListing()
-  await wishlistStore.loadWishlist()
 }, { immediate: true })
+
+watch(() => authStore.user?.id, async () => {
+  await loadListing()
+  await wishlistStore.loadWishlist()
+})
 
 onMounted(() => {
   gsap.from('.listing-image', {

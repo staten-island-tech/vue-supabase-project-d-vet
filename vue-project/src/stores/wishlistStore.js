@@ -1,7 +1,30 @@
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { useAuthStore } from '@/stores/authStore'
 import { supabase } from '@/supabase'
+
+function getWishlistStorageKey(userId) {
+  return `wishlist:${userId || 'guest'}`
+}
+
+function readWishlistIds(userId) {
+  if (!userId) return []
+  try {
+    const raw = localStorage.getItem(getWishlistStorageKey(userId))
+    return raw ? JSON.parse(raw) : []
+  } catch {
+    return []
+  }
+}
+
+function writeWishlistIds(userId, ids) {
+  if (!userId) return
+  try {
+    localStorage.setItem(getWishlistStorageKey(userId), JSON.stringify(ids))
+  } catch {
+    // Ignore storage issues so the app still runs.
+  }
+}
 
 export const useWishlistStore = defineStore('wishlist', () => {
   const wishlistListings = ref([])
@@ -10,8 +33,20 @@ export const useWishlistStore = defineStore('wishlist', () => {
 
   const authStore = useAuthStore()
 
-  async function loadWishlist() {
-    const userId = authStore.user?.id
+  async function resolveUserId() {
+    const storeUserId = authStore.user?.id
+    if (storeUserId) return storeUserId
+
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser()
+    if (!error && user?.id) return user.id
+    return null
+  }
+
+  /* async function loadWishlist() {
+    const userId = await resolveUserId()
     if (!userId) {
       wishlistListings.value = []
       return
@@ -26,29 +61,76 @@ export const useWishlistStore = defineStore('wishlist', () => {
         .select('listing_id')
         .eq('user_id', userId)
 
-      if (wishlistError) {
-        throw wishlistError
+      if (!wishlistError) {
+        const listingIds = (wishlistRows || []).map((row) => row.listing_id).filter(Boolean)
+        writeWishlistIds(userId, listingIds)
+
+        if (listingIds.length === 0) {
+          wishlistListings.value = []
+          return
+        }
+
+        const { data: listings, error: listingsError } = await supabase
+          .from('listings')
+          .select('id,title,price,image_url,description,location,created_at,user_id')
+          .in('id', listingIds)
+
+        if (!listingsError) {
+          wishlistListings.value = listings || []
+          return
+        }
       }
 
-      const listingIds = (wishlistRows || []).map((row) => row.listing_id).filter(Boolean)
-
-      if (listingIds.length === 0) {
+      const fallbackIds = readWishlistIds(userId)
+      if (fallbackIds.length === 0) {
         wishlistListings.value = []
         return
       }
 
-      const { data: listings, error: listingsError } = await supabase
+      const { data: fallbackListings, error: fallbackError } = await supabase
         .from('listings')
-        .select('id,title,price,image_url,description,location,created_at,poster_email,email,user_id')
-        .in('id', listingIds)
+        .select('id,title,price,image_url,description,location,created_at,user_id')
+        .in('id', fallbackIds)
 
-      if (listingsError) {
-        throw listingsError
+      if (!fallbackError) {
+        wishlistListings.value = fallbackListings || []
+      } else {
+        wishlistListings.value = []
       }
-
-      wishlistListings.value = listings || []
     } catch (err) {
       error.value = err?.message || 'Unable to load wishlist'
+      wishlistListings.value = []
+    } finally {
+      loading.value = false
+    }
+  } */
+  async function loadWishlist() {
+    console.log('LOAD WISHLIST CALLWS')
+    const userId = await resolveUserId()
+
+    if (!userId) {
+      wishlistListings.value = []
+      return
+    }
+
+    loading.value = true
+
+    try {
+      const { data: wishlistRows, error } = await supabase
+        .from('wishlist')
+        .select(
+          `
+        listing_id,
+        listings (*)
+      `,
+        )
+        .eq('user_id', userId)
+
+      if (error) throw error
+
+      wishlistListings.value = wishlistRows?.map((row) => row.listings).filter(Boolean) || []
+    } catch (err) {
+      console.error(err)
       wishlistListings.value = []
     } finally {
       loading.value = false
@@ -56,7 +138,7 @@ export const useWishlistStore = defineStore('wishlist', () => {
   }
 
   async function addToWishlist(listingId) {
-    const userId = authStore.user?.id
+    const userId = await resolveUserId()
     if (!userId || !listingId) return false
 
     try {
@@ -65,10 +147,7 @@ export const useWishlistStore = defineStore('wishlist', () => {
         listing_id: listingId,
       })
 
-      if (insertError) {
-        if (/duplicate|already/i.test(insertError.message || '')) {
-          return false
-        }
+      if (insertError && !/duplicate|already/i.test(insertError.message || '')) {
         throw insertError
       }
 
@@ -81,7 +160,7 @@ export const useWishlistStore = defineStore('wishlist', () => {
   }
 
   async function removeFromWishlist(listingId) {
-    const userId = authStore.user?.id
+    const userId = await resolveUserId()
     if (!userId || !listingId) return false
 
     try {
@@ -104,6 +183,18 @@ export const useWishlistStore = defineStore('wishlist', () => {
   function hasListing(listingId) {
     return wishlistListings.value.some((item) => item.id === listingId)
   }
+
+  watch(
+    () => authStore.user?.id,
+    async (userId) => {
+      if (userId) {
+        await loadWishlist()
+      } else {
+        wishlistListings.value = []
+      }
+    },
+    { immediate: true },
+  )
 
   return {
     wishlistListings,
