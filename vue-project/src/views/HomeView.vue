@@ -18,7 +18,7 @@
           <button class="big-btn" @click="goCreate">Post</button>
         </div>
       </section>
-
+      <p>Wishlist count: {{ wishlistListings.length }}</p>
       <section class="wishlist-section">
         <div class="section-title">Your Wishlist</div>
         <div v-if="!authStore.isSignedIn" class="empty">Sign in to see your saved listings.</div>
@@ -45,16 +45,18 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import { useWishlistStore } from '@/stores/wishlistStore'
+import { storeToRefs } from 'pinia'
 
 const router = useRouter()
 const authStore = useAuthStore()
 const wishlistStore = useWishlistStore()
 const q = ref('')
 const loading = ref(false)
-
-const wishlistListings = wishlistStore.wishlistListings
-/* const wishlistListings = computed(() => wishlistStore.wishlistListings) */
-const wishlistLoading = computed(() => wishlistStore.loading)
+const { wishlistListings, loading: wishlistLoading } =
+  storeToRefs(wishlistStore)
+// const wishlistListings = wishlistStore.wishlistListings
+// /* const wishlistListings = computed(() => wishlistStore.wishlistListings) */
+// const wishlistLoading = computed(() => wishlistStore.loading)
 
 async function fetchListings() {
   loading.value = true
@@ -70,8 +72,13 @@ function openItem(item) {
   router.push({ name: 'listing-detail', params: { id: item.id } }).catch(() => {})
 }
 
-function removeFromWishlist(listingId) {
+/* function removeFromWishlist(listingId) {
   wishlistStore.removeFromWishlist(listingId)
+} */
+async function removeFromWishlist(listingId) {
+  const success = await wishlistStore.removeFromWishlist(listingId)
+
+  console.log('REMOVE SUCCESS', success)
 }
 
 function goLogin() {

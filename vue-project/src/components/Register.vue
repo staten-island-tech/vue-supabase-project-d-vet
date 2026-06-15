@@ -46,7 +46,16 @@ const register = async () => {
         },
       },
     })
-
+    if (data.user) {
+      await supabase
+        .from('profiles')
+        .insert({
+          id: data.user.id,
+          email: email.value,
+          username: username.value,
+          pfp_url: profilePicture.value
+        })
+    }
     if (error) {
       message.value = error.message
       console.log(data)

@@ -45,8 +45,10 @@ export const useWishlistStore = defineStore('wishlist', () => {
     return null
   }
 
-  /* async function loadWishlist() {
+  async function loadWishlist() {
     const userId = await resolveUserId()
+    console.log('AUTH STORE USER', authStore.user)
+    console.log('RESOLVED USER ID', userId)
     if (!userId) {
       wishlistListings.value = []
       return
@@ -60,7 +62,8 @@ export const useWishlistStore = defineStore('wishlist', () => {
         .from('wishlist')
         .select('listing_id')
         .eq('user_id', userId)
-
+      console.log('wishlistRows', wishlistRows)
+      console.log('wishlistError', wishlistError)
       if (!wishlistError) {
         const listingIds = (wishlistRows || []).map((row) => row.listing_id).filter(Boolean)
         writeWishlistIds(userId, listingIds)
@@ -74,7 +77,9 @@ export const useWishlistStore = defineStore('wishlist', () => {
           .from('listings')
           .select('id,title,price,image_url,description,location,created_at,user_id')
           .in('id', listingIds)
-
+        console.log('listingIds', listingIds)
+        console.log('listings', listings)
+        console.log('listingsError', listingsError)
         if (!listingsError) {
           wishlistListings.value = listings || []
           return
@@ -103,8 +108,8 @@ export const useWishlistStore = defineStore('wishlist', () => {
     } finally {
       loading.value = false
     }
-  } */
-  async function loadWishlist() {
+  }
+/*   async function loadWishlist() {
     console.log('LOAD WISHLIST CALLWS')
     const userId = await resolveUserId()
 
@@ -135,7 +140,7 @@ export const useWishlistStore = defineStore('wishlist', () => {
     } finally {
       loading.value = false
     }
-  }
+  } */
 
   async function addToWishlist(listingId) {
     const userId = await resolveUserId()
@@ -159,7 +164,7 @@ export const useWishlistStore = defineStore('wishlist', () => {
     }
   }
 
-  async function removeFromWishlist(listingId) {
+/*   async function removeFromWishlist(listingId) {
     const userId = await resolveUserId()
     if (!userId || !listingId) return false
 
@@ -170,15 +175,46 @@ export const useWishlistStore = defineStore('wishlist', () => {
         .eq('user_id', userId)
         .eq('listing_id', listingId)
 
-      if (deleteError) throw deleteError
+      if (deleteError) throw deleteError */
+      async function removeFromWishlist(listingId) {
+  const userId = await resolveUserId()
 
-      await loadWishlist()
+  if (!userId || !listingId) return false
+
+  try {
+    const { error } = await supabase
+      .from('wishlist')
+      .delete()
+      .match({
+        user_id: userId,
+        listing_id: listingId,
+      })
+
+    if (error) {
+      console.error(error)
+      throw error
+    }
+
+    wishlistListings.value =
+      wishlistListings.value.filter(
+        item => item.id !== listingId
+      )
+
+    return true
+  } catch (err) {
+    console.error(err)
+    error.value = err?.message || 'Unable to remove from wishlist'
+    return false
+  }
+}
+
+/*       await loadWishlist()
       return true
     } catch (err) {
       error.value = err?.message || 'Unable to remove from wishlist'
       return false
     }
-  }
+  } */
 
   function hasListing(listingId) {
     return wishlistListings.value.some((item) => item.id === listingId)
