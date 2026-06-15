@@ -11,9 +11,6 @@
       <p v-if="error" class="error">{{ error }}</p>
       <p v-if="info" class="info">{{ info }}</p>
       <div class="row">
-        <button type="button" class="link" @click="sendSignInLink" :disabled="sendingLink">
-          {{ sendingLink ? 'Sending link...' : 'Send sign-in link' }}
-        </button>
         <router-link to="/register">Create account</router-link>
       </div>
     </form>
@@ -22,14 +19,14 @@
 <script setup>
 import { ref } from "vue"
 import { useRouter } from 'vue-router'
-import { supabase } from "../supabase"
+import { useAuthStore } from '@/stores/authStore'
 
 const router = useRouter()
+const authStore = useAuthStore()
 function goHome() { router.push({ name: 'home' }).catch(() => {}) }
 const email = ref("")
 const password = ref("")
 const loading = ref(false)
-const sendingLink = ref(false)
 const error = ref('')
 const info = ref('')
 async function login() {
@@ -37,51 +34,21 @@ async function login() {
   info.value = ''
   loading.value = true
   try {
-    const { data, error: signInError } = await supabase.auth.signInWithPassword({
-      email: email.value,
-      password: password.value,
-    })
-
-    if (signInError) {
-      const msg = signInError.message || ''
-      if (/confirm|confirmed|not confirmed/i.test(msg)) {
-        error.value = 'Email not confirmed. You can send a sign-in link below.'
-        info.value = ''
-        loading.value = false
-        return
-      }
-      error.value = msg || 'Sign in failed'
-      return
-    }
+    await authStore.signIn(email.value, password.value)
     info.value = 'Signed in'
     email.value = ''
     password.value = ''
     await router.push('/').catch(() => {})
   } catch (err) {
-    error.value = err?.message ?? String(err)
+    const msg = err?.message ?? String(err)
+    const normalized = msg.toLowerCase()
+    if (normalized.includes('invalid') || normalized.includes('credential') || normalized.includes('password') || normalized.includes('email')) {
+      error.value = 'Invalid email or password'
+    } else {
+      error.value = 'Sign in failed'
+    }
   } finally {
     loading.value = false
-  }
-}
-async function sendSignInLink() {
-  error.value = ''
-  info.value = ''
-  if (!email.value) {
-    error.value = 'Enter your email to receive a sign-in link.'
-    return
-  }
-  sendingLink.value = true
-  try {
-    const { error: otpError } = await supabase.auth.signInWithOtp({ email: email.value })
-    if (otpError) {
-      error.value = otpError.message || 'Unable to send link'
-    } else {
-      info.value = 'Check your email for a sign-in link (also check spam).'
-    }
-  } catch (err) {
-    error.value = err?.message ?? String(err)
-  } finally {
-    sendingLink.value = false
   }
 }
 </script>

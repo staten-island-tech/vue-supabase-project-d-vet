@@ -5,24 +5,16 @@
     </header>
     <form class="register-form" @submit.prevent="register">
       <h2>Create Account</h2>
-      <input
-        v-model="username"
-        type="email"
-        placeholder="Input Email"
-        required
-      />
-      <input
-        v-model="password"
-        type="password"
-        placeholder="Input Password"
-        required
-      />
+      <input v-model="email" type="email" placeholder="Email" required />
+      <input v-model="username" type="text" placeholder="Username" required />
+      <input v-model="profilePicture" type="url" placeholder="Profile Picture URL" />
+      <input v-model="password" type="password" placeholder="Password" required />
       <button type="submit" :disabled="loading">
         {{ loading ? "Creating..." : "Register" }}
       </button>
       <p v-if="message" class="message">
         {{ message }}
-     </p>
+      </p>
     </form>
   </div>
 </template>
@@ -30,33 +22,48 @@
 <script setup>
 import { ref } from "vue"
 import { useRouter } from 'vue-router'
-import { createClient } from "@supabase/supabase-js"
-const supabaseUrl = "https://oxyotgdlkktbqwpkremj.supabase.co"
-const supabaseKey = "sb_publishable__Wh7v9WbfDZymXwdcEnXGA_YyIOFVMa"
-const supabase = createClient(supabaseUrl, supabaseKey)
+import { supabase } from '@/supabase'
+
+const email = ref("")
 const username = ref("")
+const profilePicture = ref("")
 const password = ref("")
 const loading = ref(false)
 const message = ref("")
+
 const register = async () => {
   loading.value = true
   message.value = ""
 
-  const { error } = await supabase.auth.signUp({
-    email: username.value,
-    password: password.value,
-  })
+  try {
+    const { data, error } = await supabase.auth.signUp({
+      email: email.value,
+      password: password.value,
+      options: {
+        data: {
+          username: username.value,
+          pfp_url: profilePicture.value,
+        },
+      },
+    })
 
-  if (error) {
-    message.value = error.message
-  } else {
+    if (error) {
+      message.value = error.message
+      console.log(data)
+      console.log(error)
+      return
+    }
+
     message.value = "Registration successful"
+    email.value = ""
     username.value = ""
+    profilePicture.value = ""
     password.value = ""
+  } finally {
+    loading.value = false
   }
-
-  loading.value = false
 }
+
 const router = useRouter()
 function goHome() { router.push({ name: 'home' }).catch(() => {}) }
 </script>

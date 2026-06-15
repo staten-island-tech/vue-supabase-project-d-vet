@@ -25,6 +25,10 @@
           <span class="meta">Poster Email:</span>
           <input class="email-input" :value="posterEmail" readonly @focus="$event.target.select()" />
         </div>
+        <button class="animate-in wishlist-btn" :disabled="!authStore.isSignedIn || isWishlisted" @click="addToWishlist">
+          {{ isWishlisted ? 'Saved to Wishlist' : (authStore.isSignedIn ? 'Add to Wishlist' : 'Sign in to save') }}
+        </button>
+        <p v-if="wishlistMessage" class="animate-in wishlist-message">{{ wishlistMessage }}</p>
       </div>
     </main>
 
@@ -36,15 +40,21 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import gsap from 'gsap'
 import { supabase } from '@/supabase'
+import { useAuthStore } from '@/stores/authStore'
+import { useWishlistStore } from '@/stores/wishlistStore'
 
 const route = useRoute()
 const router = useRouter()
+const authStore = useAuthStore()
+const wishlistStore = useWishlistStore()
 const listing = ref(null)
+const posterEmailValue = ref('')
 const loading = ref(false)
+const wishlistMessage = ref('')
 
 const postedOn = computed(() => {
   if (!listing.value?.created_at) return 'Unknown'
@@ -52,9 +62,10 @@ const postedOn = computed(() => {
 })
 
 const posterEmail = computed(() => {
-  const value = listing.value?.poster_email || listing.value?.email || listing.value?.user_email || ''
-  return value || 'Email unavailable'
+  return posterEmailValue.value || 'Email unavailable'
 })
+
+const isWishlisted = computed(() => Boolean(listing.value?.id && wishlistStore.hasListing(listing.value.id)))
 
 async function loadListing() {
   loading.value = true
@@ -65,21 +76,48 @@ async function loadListing() {
       .eq('id', route.params.id)
       .maybeSingle()
 
-    if (!error) {
+    if (!error && data) {
       listing.value = data
+
+      const ownerId = data.user_id
+      if (ownerId && supabase.auth?.admin?.getUserById) {
+        const { data: userData, error: userError } = await supabase.auth.admin.getUserById(ownerId)
+        if (!userError && userData?.user?.email) {
+          posterEmailValue.value = userData.user.email
+        } else {
+          posterEmailValue.value = data.poster_email || data.email || data.user_email || ''
+        }
+      } else {
+        posterEmailValue.value = data.poster_email || data.email || data.user_email || ''
+      }
     }
   } finally {
     loading.value = false
   }
 }
 
+async function addToWishlist() {
+  if (!listing.value?.id) return
+  wishlistMessage.value = ''
+  if (!authStore.isSignedIn) {
+    wishlistMessage.value = 'Please sign in to save this listing.'
+    return
+  }
+
+  const success = await wishlistStore.addToWishlist(listing.value.id)
+  wishlistMessage.value = success ? 'Added to your wishlist.' : 'This listing is already in your wishlist.'
+}
+
 function goBack() {
   router.push({ name: 'human-listing' }).catch(() => {})
 }
 
-onMounted(async () => {
+watch(() => route.params.id, async () => {
   await loadListing()
+  await wishlistStore.loadWishlist()
+}, { immediate: true })
 
+onMounted(() => {
   gsap.from('.listing-image', {
     opacity: 0,
     scale: 0.95,
@@ -195,6 +233,27 @@ onMounted(async () => {
   background: rgba(255,255,255,0.06);
   color: #fff;
   box-sizing: border-box;
+}
+
+.wishlist-btn {
+  margin-top: 6px;
+  padding: 10px 12px;
+  border: none;
+  border-radius: 10px;
+  background: #dc2626;
+  color: white;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.wishlist-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.wishlist-message {
+  color: #7ef6d0;
+  margin: 0;
 }
 
 .empty-state {
