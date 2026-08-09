@@ -8,7 +8,7 @@
 
       <form @submit.prevent="createListing">
         <input v-model="title" type="text" placeholder="Recipe title" />
-        <input v-model="pricePerServing" type="number" placeholder="Price per serving" />
+        <input v-model="pricePerServing" type="number" step="0.01" placeholder="Price per serving" />
         <input v-model="timeToMake" type="number" placeholder="Time to make (minutes)" />
         <input v-model="servings" type="number" placeholder="Number of servings (optional)" />
         <input v-model="imageUrl" type="text" placeholder="Image URL" />
