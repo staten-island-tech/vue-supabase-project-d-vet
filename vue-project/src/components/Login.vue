@@ -1,7 +1,7 @@
 <template>
   <div class="login-wrap">
     <header class="top">
-      <button type="button" class="brand" @click="goHome">Thung Ho</button>
+      <button type="button" class="brand" @click="goHome">Repertoire</button>
     </header>
     <form class="card" @submit.prevent="login">
       <h2>Sign in</h2>
@@ -76,6 +76,7 @@ async function login() {
   font-weight: 700;
   font-size: 18px;
   color: #fff;
+  font-family: 'Arial Rounded MT Bold', 'Trebuchet MS', 'Segoe UI', sans-serif;
   background: transparent;
   border: none;
   cursor: pointer;

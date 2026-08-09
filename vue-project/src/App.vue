@@ -1,7 +1,7 @@
 <template>
   <div>
     <header class="app-header">
-      <router-link class="brand" :to="{ name: 'home' }">Thung Ho</router-link>
+      <router-link class="brand" :to="{ name: 'home' }">Repertoire</router-link>
       <div class="user-pill">
         <img :src="authStore.profilePicture" alt="Profile" class="avatar" />
         <span>{{ authStore.displayName }}</span>
@@ -33,6 +33,7 @@ const authStore = useAuthStore()
   color: #fff;
   font-weight: 700;
   font-size: 18px;
+  font-family: 'Arial Rounded MT Bold', 'Trebuchet MS', 'Segoe UI', sans-serif;
   text-decoration: none;
 }
 .user-pill {

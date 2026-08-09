@@ -1,7 +1,7 @@
 <template>
   <div>
     <header class="top">
-      <button type="button" class="brand" @click="goHome">Thung Ho</button>
+      <button type="button" class="brand" @click="goHome">Repertoire</button>
     </header>
     <main class="container">
       <h1>Create Listing</h1>
@@ -113,6 +113,7 @@ textarea {
   font-weight: 700;
   font-size: 18px;
   color: #fff;
+  font-family: 'Arial Rounded MT Bold', 'Trebuchet MS', 'Segoe UI', sans-serif;
   background: transparent;
   border: none;
   cursor: pointer;

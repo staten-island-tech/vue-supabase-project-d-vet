@@ -1,7 +1,7 @@
 <template>
   <div class="register-container">
     <header class="top">
-      <button type="button" class="brand" @click="goHome">Thung Ho</button>
+      <button type="button" class="brand" @click="goHome">Repertoire</button>
     </header>
     <form class="register-form" @submit.prevent="register">
       <h2>Create Account</h2>
@@ -87,7 +87,7 @@ function goHome() { router.push({ name: 'home' }).catch(() => {}) }
 }
 
 .top{ display:flex; justify-content:flex-end; padding:12px 16px; width:100%; position:fixed; top:0; left:0; }
-.brand{ font-weight:700; font-size:18px; color:#fff; background:transparent; border:none; cursor:pointer; }
+.brand{ font-weight:700; font-size:18px; color:#fff; font-family: 'Arial Rounded MT Bold', 'Trebuchet MS', 'Segoe UI', sans-serif; background:transparent; border:none; cursor:pointer; }
 
 .register-form {
   width: 100%;

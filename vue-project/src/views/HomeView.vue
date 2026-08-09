@@ -1,7 +1,7 @@
 <template>
   <div class="home">
     <header class="top">
-      <div class="brand">Thung Ho</div>
+      <div class="brand">Repertoire</div>
       <div class="search">
         <input v-model="q" @keyup.enter="fetchListings" placeholder="Search items..." />
         <button @click="fetchListings">Search</button>
@@ -106,7 +106,7 @@ onMounted(() => {
 }
 .home { min-height: 100vh; background: linear-gradient(180deg, var(--bg), #05060a); color: #e6eef6; font-family: Inter, system-ui, Arial; }
 .top { display: flex; gap: 12px; align-items: center; padding: 12px 16px; background: rgba(255,255,255,0.02); border-bottom: 1px solid rgba(255,255,255,0.03); }
-.brand { font-weight: 700; font-size: 18px; color: #fff; }
+.brand { font-weight: 700; font-size: 18px; color: #fff; font-family: 'Arial Rounded MT Bold', 'Trebuchet MS', 'Segoe UI', sans-serif; }
 .search { flex: 1; display: flex; gap: 8px; align-items: center; }
 .search input { flex: 1; padding: 8px 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.03); background: var(--panel); color: var(--muted); }
 .search button, .login { background: var(--accent); border: none; padding: 8px 10px; border-radius: 8px; color: #022; cursor: pointer; }

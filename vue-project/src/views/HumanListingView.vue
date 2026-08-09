@@ -1,7 +1,7 @@
 <template>
   <div class="page">
     <header class="top">
-      <button type="button" class="brand" @click="goHome">Thung Ho</button>
+      <button type="button" class="brand" @click="goHome">Repertoire</button>
       <div class="search">
         <input v-model="searchQuery" placeholder="Search items..." @keyup.enter="applyFilters" />
         <button @click="applyFilters">Search</button>
@@ -13,14 +13,14 @@
         <h2>Filters</h2>
 
         <div class="price-filter">
-          <label>Max Price</label>
+          <label>Max Minutes</label>
 
           <div id="slider-track">
             <div id="slider-fill"></div>
             <div id="slider-handle"></div>
           </div>
 
-          <p>${{ maxPrice.toLocaleString() }}</p>
+          <p>{{ maxMinutes.toLocaleString() }} Minutes</p>
         </div>
 
         <button class="apply-filters-button" @click="applyFilters">
@@ -59,7 +59,8 @@ import Draggable from 'gsap/Draggable'
 gsap.registerPlugin(Draggable)
 
 const listings = ref([])
-const maxPrice = ref(50000)
+const maxMinutes = ref(60)
+const maxSliderValue = 120
 const searchQuery = ref('')
 
 const filteredListings = computed(() => {
@@ -67,7 +68,7 @@ const filteredListings = computed(() => {
   const sourceListings = Array.isArray(listings.value) ? listings.value : []
 
   return sourceListings.filter((listing) => {
-    const matchesPrice = Number(listing?.price ?? 0) <= maxPrice.value
+    const matchesPrice = Number(listing?.price ?? 0) <= maxMinutes.value
     const matchesSearch =
       !term ||
       (listing?.title || '').toLowerCase().includes(term) ||
@@ -118,7 +119,7 @@ onMounted(async () => {
   const width = track?.offsetWidth || 240
   const maxX = Math.max(width - 26, 0)
 
-  const initialPercent = maxPrice.value / 99999
+  const initialPercent = maxMinutes.value / maxSliderValue
   const initialX = Math.round(initialPercent * maxX)
 
   gsap.set(fill, { width: `${initialPercent * 100}%` })
@@ -128,8 +129,8 @@ onMounted(async () => {
     type: 'x',
     bounds: { minX: 0, maxX },
     onDrag() {
-      const percent = this.x / maxX
-      maxPrice.value = Math.round(percent * 99999)
+      const percent = maxX > 0 ? this.x / maxX : 0
+      maxMinutes.value = Math.round(percent * maxSliderValue)
       gsap.set(fill, { width: `${percent * 100}%` })
     },
   })
@@ -202,6 +203,7 @@ onMounted(async () => {
   font-weight: 700;
   font-size: 18px;
   color: #fff;
+  font-family: 'Arial Rounded MT Bold', 'Trebuchet MS', 'Segoe UI', sans-serif;
   background: transparent;
   border: none;
   cursor: pointer;
