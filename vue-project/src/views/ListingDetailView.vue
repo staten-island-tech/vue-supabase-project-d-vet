@@ -17,9 +17,10 @@
 
       <div class="content">
         <h1 class="animate-in title">{{ listing.title }}</h1>
-        <p class="animate-in price">
+        <p class="animate-in price" v-if="listing.price_per_serving || listing.price">
           ${{ listing.price_per_serving ?? listing.price }} / serving
         </p>
+        <p class="animate-in meta" v-if="listing.time_to_make">Time to make: {{ listing.time_to_make }} minutes</p>
         <p class="animate-in description">{{ listing.description || 'No description provided.' }}</p>
         <p class="animate-in meta">Posted On {{ postedOn }}</p>
         <div v-if="nutritionDetails.length" class="nutrition-grid animate-in">

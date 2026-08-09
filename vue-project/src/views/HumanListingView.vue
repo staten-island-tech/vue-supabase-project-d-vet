@@ -13,14 +13,14 @@
         <h2>Filters</h2>
 
         <div class="price-filter">
-          <label>Max Price per serving</label>
+          <label>Max Time to make</label>
 
           <div id="slider-track">
             <div id="slider-fill"></div>
             <div id="slider-handle"></div>
           </div>
 
-          <p>${{ maxPricePerServing.toLocaleString() }} / serving</p>
+          <p>{{ maxTimeToMake.toLocaleString() }} Minutes</p>
         </div>
 
         <button class="apply-filters-button" @click="applyFilters">
@@ -61,7 +61,7 @@ import Draggable from 'gsap/Draggable'
 gsap.registerPlugin(Draggable)
 
 const listings = ref([])
-const maxPricePerServing = ref(60)
+const maxTimeToMake = ref(60)
 const maxSliderValue = 120
 const searchQuery = ref('')
 
@@ -70,13 +70,13 @@ const filteredListings = computed(() => {
   const sourceListings = Array.isArray(listings.value) ? listings.value : []
 
   return sourceListings.filter((listing) => {
-    const matchesPrice = Number(listing?.price_per_serving ?? listing?.price ?? 0) <= maxPricePerServing.value
+    const matchesTime = Number(listing?.time_to_make ?? 0) <= maxTimeToMake.value
     const matchesSearch =
       !term ||
       (listing?.title || '').toLowerCase().includes(term) ||
       (listing?.description || '').toLowerCase().includes(term)
 
-    return matchesPrice && matchesSearch
+    return matchesTime && matchesSearch
   })
 })
 
@@ -120,7 +120,7 @@ onMounted(async () => {
   const width = track?.offsetWidth || 240
   const maxX = Math.max(width - 26, 0)
 
-  const initialPercent = maxPricePerServing.value / maxSliderValue
+  const initialPercent = maxTimeToMake.value / maxSliderValue
   const initialX = Math.round(initialPercent * maxX)
 
   gsap.set(fill, { width: `${initialPercent * 100}%` })
@@ -131,7 +131,7 @@ onMounted(async () => {
     bounds: { minX: 0, maxX },
     onDrag() {
       const percent = maxX > 0 ? this.x / maxX : 0
-      maxPricePerServing.value = Math.round(percent * maxSliderValue)
+      maxTimeToMake.value = Math.round(percent * maxSliderValue)
       gsap.set(fill, { width: `${percent * 100}%` })
     },
   })

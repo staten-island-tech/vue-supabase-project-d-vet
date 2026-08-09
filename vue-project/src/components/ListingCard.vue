@@ -11,6 +11,7 @@
       <p class="price" v-if="listing.price_per_serving || listing.price">
         ${{ listing.price_per_serving ?? listing.price }} / serving
       </p>
+      <p v-if="listing.time_to_make" class="meta">Time: {{ listing.time_to_make }} minutes</p>
       <p class="created" v-if="createdAt">Added: {{ createdAt }}</p>
     </div>
   </div>

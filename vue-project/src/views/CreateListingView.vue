@@ -9,6 +9,7 @@
       <form @submit.prevent="createListing">
         <input v-model="title" type="text" placeholder="Recipe title" />
         <input v-model="pricePerServing" type="number" placeholder="Price per serving" />
+        <input v-model="timeToMake" type="number" placeholder="Time to make (minutes)" />
         <input v-model="imageUrl" type="text" placeholder="Image URL" />
         <input v-model="createdAt" type="datetime-local" placeholder="Created at (optional)" />
 
@@ -36,6 +37,7 @@ function goHome() {
 }
 const title = ref('')
 const pricePerServing = ref('')
+const timeToMake = ref('')
 const imageUrl = ref('')
 const createdAt = ref('')
 const description = ref('')
@@ -48,8 +50,8 @@ const sugarPerServing = ref('')
 const sodiumPerServing = ref('')
 const errorMessage = ref('')
 async function createListing() {
-  if (!title.value || !pricePerServing.value) {
-    errorMessage.value = 'Title and price per serving required'
+  if (!title.value || !pricePerServing.value || !timeToMake.value) {
+    errorMessage.value = 'Title, price per serving, and time to make are required'
     return
   }
   try {
@@ -65,6 +67,7 @@ async function createListing() {
     const payload = {
       title: title.value,
       price_per_serving: Number(pricePerServing.value),
+      time_to_make: Number(timeToMake.value),
       image_url: imageUrl.value,
       description: description.value,
       user_id: user.id,
@@ -97,6 +100,7 @@ async function createListing() {
     }
     title.value = ''
     pricePerServing.value = ''
+    timeToMake.value = ''
     imageUrl.value = ''
     description.value = ''
     kcalPerServing.value = ''
