@@ -40,7 +40,7 @@
             <div class="info">
               <div class="title">{{ listing.title }}</div>
               <div class="price" v-if="listing.price_per_serving || listing.price">
-                ${{ listing.price_per_serving ?? listing.price }} / serving
+                ${{ listing.price_per_serving || listing.price }} / serving
               </div>
             </div>
           </div>

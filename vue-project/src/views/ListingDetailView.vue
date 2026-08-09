@@ -18,8 +18,9 @@
       <div class="content">
         <h1 class="animate-in title">{{ listing.title }}</h1>
         <p class="animate-in price" v-if="listing.price_per_serving || listing.price">
-          ${{ listing.price_per_serving ?? listing.price }} / serving
+          ${{ listing.price_per_serving || listing.price }} / serving
         </p>
+        <p class="animate-in meta" v-if="listing.servings">Servings: {{ listing.servings }}</p>
         <p class="animate-in meta" v-if="listing.time_to_make">Time to make: {{ listing.time_to_make }} minutes</p>
         <p class="animate-in description">{{ listing.description || 'No description provided.' }}</p>
         <p class="animate-in meta">Posted On {{ postedOn }}</p>
@@ -27,6 +28,12 @@
           <div v-for="item in nutritionDetails" :key="item.key" class="nutrition-card">
             <span class="nutrition-label">{{ item.label }}</span>
             <strong>{{ item.value }}</strong>
+          </div>
+        </div>
+        <div v-if="ingredientLines.length" class="ingredients animate-in">
+          <div class="section-title">Ingredients</div>
+          <div class="ingredient-list">
+            <p v-for="(line, index) in ingredientLines" :key="index">— {{ line }}</p>
           </div>
         </div>
         <div class="animate-in email-block">
@@ -88,6 +95,14 @@ const nutritionDetails = computed(() => {
   return fields
     .filter((field) => values[field.key] != null && values[field.key] !== '')
     .map((field) => ({ key: field.key, label: field.label, value: values[field.key] }))
+})
+
+const ingredientLines = computed(() => {
+  const raw = listing.value?.ingredients || ''
+  return raw
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => line.length)
 })
 
 const isWishlisted = computed(() => Boolean(listing.value?.id && wishlistStore.hasListing(listing.value.id)))
@@ -275,6 +290,23 @@ onMounted(() => {
   font-size: 12px;
   color: #9aa6b2;
   margin-bottom: 4px;
+}
+
+.ingredients {
+  padding: 16px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  margin-top: 10px;
+}
+
+.ingredient-list {
+  margin-top: 10px;
+}
+
+.ingredient-list p {
+  margin: 0 0 8px;
+  line-height: 1.5;
 }
 
 .email-block {

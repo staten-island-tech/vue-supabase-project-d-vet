@@ -10,10 +10,12 @@
         <input v-model="title" type="text" placeholder="Recipe title" />
         <input v-model="pricePerServing" type="number" placeholder="Price per serving" />
         <input v-model="timeToMake" type="number" placeholder="Time to make (minutes)" />
+        <input v-model="servings" type="number" placeholder="Number of servings (optional)" />
         <input v-model="imageUrl" type="text" placeholder="Image URL" />
         <input v-model="createdAt" type="datetime-local" placeholder="Created at (optional)" />
 
         <textarea v-model="description" placeholder="Description / recipe notes"></textarea>
+        <textarea v-model="ingredients" placeholder="Ingredients, one per line (optional)"></textarea>
         <input v-model="kcalPerServing" type="number" placeholder="Kcal per serving (optional)" />
         <input v-model="proteinPerServing" type="number" placeholder="Protein per serving (g, optional)" />
         <input v-model="carbsPerServing" type="number" placeholder="Carbohydrates per serving (g, optional)" />
@@ -38,9 +40,11 @@ function goHome() {
 const title = ref('')
 const pricePerServing = ref('')
 const timeToMake = ref('')
+const servings = ref('')
 const imageUrl = ref('')
 const createdAt = ref('')
 const description = ref('')
+const ingredients = ref('')
 const kcalPerServing = ref('')
 const proteinPerServing = ref('')
 const carbsPerServing = ref('')
@@ -72,6 +76,8 @@ async function createListing() {
       description: description.value,
       user_id: user.id,
     }
+    if (servings.value) payload.servings = Number(servings.value)
+    if (ingredients.value) payload.ingredients = ingredients.value
     if (kcalPerServing.value) payload.kcal_per_serving = Number(kcalPerServing.value)
     if (proteinPerServing.value) payload.protein_per_serving = Number(proteinPerServing.value)
     if (carbsPerServing.value) payload.carbs_per_serving = Number(carbsPerServing.value)
@@ -99,8 +105,10 @@ async function createListing() {
       }
     }
     title.value = ''
+    ingredients.value = ''
     pricePerServing.value = ''
     timeToMake.value = ''
+    servings.value = ''
     imageUrl.value = ''
     description.value = ''
     kcalPerServing.value = ''
