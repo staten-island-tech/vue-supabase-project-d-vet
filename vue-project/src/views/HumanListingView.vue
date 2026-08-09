@@ -3,7 +3,7 @@
     <header class="top">
       <button type="button" class="brand" @click="goHome">Repertoire</button>
       <div class="search">
-        <input v-model="searchQuery" placeholder="Search items..." @keyup.enter="applyFilters" />
+        <input v-model="searchQuery" placeholder="Search recipes..." @keyup.enter="applyFilters" />
         <button @click="applyFilters">Search</button>
       </div>
     </header>
@@ -13,14 +13,14 @@
         <h2>Filters</h2>
 
         <div class="price-filter">
-          <label>Max Minutes</label>
+          <label>Max Price per serving</label>
 
           <div id="slider-track">
             <div id="slider-fill"></div>
             <div id="slider-handle"></div>
           </div>
 
-          <p>{{ maxMinutes.toLocaleString() }} Minutes</p>
+          <p>${{ maxPricePerServing.toLocaleString() }} / serving</p>
         </div>
 
         <button class="apply-filters-button" @click="applyFilters">
@@ -39,7 +39,9 @@
             </div>
             <div class="info">
               <div class="title">{{ listing.title }}</div>
-              <div class="price" v-if="listing.price">${{ listing.price }}</div>
+              <div class="price" v-if="listing.price_per_serving || listing.price">
+                ${{ listing.price_per_serving ?? listing.price }} / serving
+              </div>
             </div>
           </div>
         </div>
@@ -59,7 +61,7 @@ import Draggable from 'gsap/Draggable'
 gsap.registerPlugin(Draggable)
 
 const listings = ref([])
-const maxMinutes = ref(60)
+const maxPricePerServing = ref(60)
 const maxSliderValue = 120
 const searchQuery = ref('')
 
@@ -68,12 +70,11 @@ const filteredListings = computed(() => {
   const sourceListings = Array.isArray(listings.value) ? listings.value : []
 
   return sourceListings.filter((listing) => {
-    const matchesPrice = Number(listing?.price ?? 0) <= maxMinutes.value
+    const matchesPrice = Number(listing?.price_per_serving ?? listing?.price ?? 0) <= maxPricePerServing.value
     const matchesSearch =
       !term ||
       (listing?.title || '').toLowerCase().includes(term) ||
-      (listing?.description || '').toLowerCase().includes(term) ||
-      (listing?.location || '').toLowerCase().includes(term)
+      (listing?.description || '').toLowerCase().includes(term)
 
     return matchesPrice && matchesSearch
   })
@@ -119,7 +120,7 @@ onMounted(async () => {
   const width = track?.offsetWidth || 240
   const maxX = Math.max(width - 26, 0)
 
-  const initialPercent = maxMinutes.value / maxSliderValue
+  const initialPercent = maxPricePerServing.value / maxSliderValue
   const initialX = Math.round(initialPercent * maxX)
 
   gsap.set(fill, { width: `${initialPercent * 100}%` })
@@ -130,7 +131,7 @@ onMounted(async () => {
     bounds: { minX: 0, maxX },
     onDrag() {
       const percent = maxX > 0 ? this.x / maxX : 0
-      maxMinutes.value = Math.round(percent * maxSliderValue)
+      maxPricePerServing.value = Math.round(percent * maxSliderValue)
       gsap.set(fill, { width: `${percent * 100}%` })
     },
   })

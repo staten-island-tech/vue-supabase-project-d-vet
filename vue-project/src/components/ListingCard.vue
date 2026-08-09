@@ -8,8 +8,9 @@
 
     <div class="listing-info">
       <h2>{{ listing.title }}</h2>
-      <p class="price">${{ listing.price }}</p>
-      <p>{{ listing.location }}</p>
+      <p class="price" v-if="listing.price_per_serving || listing.price">
+        ${{ listing.price_per_serving ?? listing.price }} / serving
+      </p>
       <p class="created" v-if="createdAt">Added: {{ createdAt }}</p>
     </div>
   </div>

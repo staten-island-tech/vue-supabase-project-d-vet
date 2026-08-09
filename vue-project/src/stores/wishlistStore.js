@@ -75,7 +75,7 @@ export const useWishlistStore = defineStore('wishlist', () => {
 
         const { data: listings, error: listingsError } = await supabase
           .from('listings')
-          .select('id,title,price,image_url,description,location,created_at,user_id')
+          .select('id,title,price_per_serving,image_url,description,created_at,user_id,kcal_per_serving,protein_per_serving,carbs_per_serving,fat_per_serving,fiber_per_serving,sugar_per_serving,sodium_per_serving')
           .in('id', listingIds)
         console.log('listingIds', listingIds)
         console.log('listings', listings)
@@ -94,7 +94,7 @@ export const useWishlistStore = defineStore('wishlist', () => {
 
       const { data: fallbackListings, error: fallbackError } = await supabase
         .from('listings')
-        .select('id,title,price,image_url,description,location,created_at,user_id')
+        .select('id,title,price_per_serving,image_url,description,created_at,user_id,kcal_per_serving,protein_per_serving,carbs_per_serving,fat_per_serving,fiber_per_serving,sugar_per_serving,sodium_per_serving')
         .in('id', fallbackIds)
 
       if (!fallbackError) {

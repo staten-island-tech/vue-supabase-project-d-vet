@@ -17,10 +17,17 @@
 
       <div class="content">
         <h1 class="animate-in title">{{ listing.title }}</h1>
-        <p class="animate-in price">${{ listing.price }}</p>
+        <p class="animate-in price">
+          ${{ listing.price_per_serving ?? listing.price }} / serving
+        </p>
         <p class="animate-in description">{{ listing.description || 'No description provided.' }}</p>
         <p class="animate-in meta">Posted On {{ postedOn }}</p>
-        <p class="animate-in meta">Pickup Location: {{ listing.location || 'Not specified' }}</p>
+        <div v-if="nutritionDetails.length" class="nutrition-grid animate-in">
+          <div v-for="item in nutritionDetails" :key="item.key" class="nutrition-card">
+            <span class="nutrition-label">{{ item.label }}</span>
+            <strong>{{ item.value }}</strong>
+          </div>
+        </div>
         <div class="animate-in email-block">
           <span class="meta">Poster Email:</span>
           <input class="email-input" :value="posterEmail" readonly @focus="$event.target.select()" />
@@ -63,6 +70,23 @@ const postedOn = computed(() => {
 
 const posterEmail = computed(() => {
   return posterEmailValue.value || 'Email unavailable'
+})
+
+const nutritionDetails = computed(() => {
+  const values = listing.value || {}
+  const fields = [
+    { key: 'kcal_per_serving', label: 'Kcal per serving' },
+    { key: 'protein_per_serving', label: 'Protein per serving (g)' },
+    { key: 'carbs_per_serving', label: 'Carbohydrates per serving (g)' },
+    { key: 'fat_per_serving', label: 'Fat per serving (g)' },
+    { key: 'fiber_per_serving', label: 'Fiber per serving (g)' },
+    { key: 'sugar_per_serving', label: 'Sugar per serving (g)' },
+    { key: 'sodium_per_serving', label: 'Sodium per serving (mg)' },
+  ]
+
+  return fields
+    .filter((field) => values[field.key] != null && values[field.key] !== '')
+    .map((field) => ({ key: field.key, label: field.label, value: values[field.key] }))
 })
 
 const isWishlisted = computed(() => Boolean(listing.value?.id && wishlistStore.hasListing(listing.value.id)))
@@ -229,6 +253,27 @@ onMounted(() => {
 .meta {
   color: #9aa6b2;
   margin: 0;
+}
+
+.nutrition-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.nutrition-card {
+  padding: 12px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.nutrition-label {
+  display: block;
+  font-size: 12px;
+  color: #9aa6b2;
+  margin-bottom: 4px;
 }
 
 .email-block {
