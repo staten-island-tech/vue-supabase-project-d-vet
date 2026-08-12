@@ -23,6 +23,7 @@
         <input v-model="fiberPerServing" type="number" placeholder="Fiber per serving (g, optional)" />
         <input v-model="sugarPerServing" type="number" placeholder="Sugar per serving (g, optional)" />
         <input v-model="sodiumPerServing" type="number" placeholder="Sodium per serving (mg, optional)" />
+        <input v-model="credits" type="text" placeholder="Credits (optional)" />
         <button type="submit">Create Listing</button>
       </form>
       <p v-if="errorMessage">{{ errorMessage }}</p>
@@ -52,6 +53,7 @@ const fatPerServing = ref('')
 const fiberPerServing = ref('')
 const sugarPerServing = ref('')
 const sodiumPerServing = ref('')
+const credits = ref('')
 const errorMessage = ref('')
 async function createListing() {
   if (!title.value || !pricePerServing.value || !timeToMake.value) {
@@ -94,6 +96,8 @@ async function createListing() {
       payload.email = user.email
     }
 
+    if (credits.value) payload.credits = credits.value
+
     const { error } = await supabase.from('listings').insert([payload])
     if (error) {
       const fallbackPayload = { ...payload }
@@ -118,6 +122,7 @@ async function createListing() {
     fiberPerServing.value = ''
     sugarPerServing.value = ''
     sodiumPerServing.value = ''
+    credits.value = ''
   } catch (err) {
     errorMessage.value = err.message
   }

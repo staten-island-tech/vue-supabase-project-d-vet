@@ -36,7 +36,7 @@
             </div>
             <div class="info">
               <div class="title" @click="openItem(it)">{{ it.title }}</div>
-              <button class="remove-btn" @click.stop="removeFromHidden(it.id)">Remove</button>
+              <button class="remove-btn" @click.stop="removeFromHidden(it.id)">Unhide</button>
             </div>
           </div>
         </div>
@@ -205,9 +205,10 @@ onMounted(() => {
 .search button, .login { background: var(--accent); border: none; padding: 8px 10px; border-radius: 8px; color: #022; cursor: pointer; }
 .content { padding: 18px; }
 .hidden-toggle-row { margin: 8px 0 12px; }
-.show-hidden-btn { background: #f59e0b; color: #111827; border: none; padding: 8px 12px; border-radius: 8px; font-weight: 700; cursor: pointer; }
+.show-hidden-btn { background: #f59e0b; color: #111827; border: none; padding: 8px 12px; border-radius: 8px; font-weight: 700; cursor: pointer; transition: transform 0.2s ease, box-shadow 0.2s ease; }
+.show-hidden-btn:hover, .remove-btn:hover, .big-btn:hover, .login:hover, .search button:hover { transform: translateY(-2px) scale(1.01); box-shadow: 0 10px 22px rgba(0,0,0,0.18); }
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; }
-.card { background: rgba(255,255,255,0.02); border-radius: 10px; overflow: hidden; border: 1px solid rgba(255,255,255,0.02); }
+.card { background: rgba(255,255,255,0.02); border-radius: 10px; overflow: hidden; border: 1px solid rgba(255,255,255,0.02); animation: fadeUp 0.45s ease both; }
 .thumb { height: 120px; background-size: cover; background-position: center; display: flex; align-items: center; justify-content: center; background: #081022; color: var(--muted); cursor: pointer; }
 .noimg { padding: 8px; color: var(--muted); }
 .info { padding: 10px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
@@ -220,5 +221,9 @@ onMounted(() => {
 .big-buttons { padding: 18px; }
 .button-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; max-width: 900px; margin: 0 auto 18px; }
 .big-btn { background: #d35400; color: #fff; padding: 36px 12px; font-size: 20px; font-weight: 800; border-radius: 12px; border: none; cursor: pointer; }
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 @media (max-width: 700px) { .grid { grid-template-columns: 1fr; } .button-grid { grid-template-columns: 1fr; } }
 </style>

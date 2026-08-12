@@ -47,6 +47,10 @@
           {{ authStore.isSignedIn ? 'Hide for me' : 'Sign in to hide' }}
         </button>
         <p v-if="wishlistMessage" class="animate-in wishlist-message">{{ wishlistMessage }}</p>
+        <div v-if="listing.credits" class="credits animate-in">
+          <div class="section-title">Credits</div>
+          <p class="credit-text">{{ listing.credits }}</p>
+        </div>
       </div>
     </main>
 
@@ -366,6 +370,19 @@ onMounted(() => {
 .wishlist-message {
   color: #7ef6d0;
   margin: 0;
+}
+
+.credits {
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.04);
+}
+.credit-text {
+  margin: 8px 0 0;
+  color: #dfe8f2;
+  line-height: 1.5;
 }
 
 .hide-btn {

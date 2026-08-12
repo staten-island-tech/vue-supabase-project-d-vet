@@ -23,9 +23,40 @@
           <p>{{ maxTimeToMake.toLocaleString() }} Minutes</p>
         </div>
 
-        <button class="apply-filters-button" @click="applyFilters">
-          Apply Filters
-        </button>
+        <div class="price-filter">
+          <label>Min Protein per serving (g)</label>
+
+          <div id="protein-track">
+            <div id="protein-fill"></div>
+            <div id="protein-handle"></div>
+          </div>
+
+          <p>{{ minProtein }} g</p>
+        </div>
+
+        <div class="price-filter">
+          <label>Min Servings</label>
+
+          <div id="servings-track">
+            <div id="servings-fill"></div>
+            <div id="servings-handle"></div>
+          </div>
+
+          <p>{{ minServings }} servings</p>
+        </div>
+
+        <div class="price-filter">
+          <label>Max Cost per serving ($)</label>
+
+          <div id="cost-track">
+            <div id="cost-fill"></div>
+            <div id="cost-handle"></div>
+          </div>
+
+          <p>${{ maxCostPerServing.toFixed(2) }}</p>
+        </div>
+
+        
       </aside>
 
       <section class="listings-panel">
@@ -67,6 +98,14 @@ const maxTimeToMake = ref(60)
 const maxSliderValue = 120
 const searchQuery = ref('')
 
+// new filters
+const minProtein = ref(0)
+const proteinMax = 200
+const minServings = ref(0)
+const servingsMax = 12
+const maxCostPerServing = ref(50)
+const costMax = 50
+
 const filteredListings = computed(() => {
   const term = searchQuery.value.trim().toLowerCase()
   const sourceListings = Array.isArray(listings.value) ? listings.value : []
@@ -78,7 +117,16 @@ const filteredListings = computed(() => {
       (listing?.title || '').toLowerCase().includes(term) ||
       (listing?.description || '').toLowerCase().includes(term)
 
-    return matchesTime && matchesSearch
+    const proteinVal = Number(listing?.protein_per_serving ?? 0)
+    const matchesProtein = proteinVal >= minProtein.value
+
+    const servingsVal = Number(listing?.servings ?? 0)
+    const matchesServings = servingsVal >= minServings.value
+
+    const priceVal = Number(listing?.price_per_serving ?? Infinity)
+    const matchesCost = priceVal <= maxCostPerServing.value
+
+    return matchesTime && matchesSearch && matchesProtein && matchesServings && matchesCost
   })
 })
 
@@ -175,6 +223,66 @@ onMounted(async () => {
     },
   })
 
+  // protein slider
+  const pTrack = document.getElementById('protein-track')
+  const pFill = document.getElementById('protein-fill')
+  const pHandle = document.getElementById('protein-handle')
+  const pWidth = pTrack?.offsetWidth || 240
+  const pMaxX = Math.max(pWidth - 26, 0)
+  const pInitialPct = minProtein.value / proteinMax
+  const pInitialX = Math.round(pInitialPct * pMaxX)
+  gsap.set(pFill, { width: `${pInitialPct * 100}%` })
+  gsap.set(pHandle, { x: pInitialX })
+  Draggable.create(pHandle, {
+    type: 'x',
+    bounds: { minX: 0, maxX: pMaxX },
+    onDrag() {
+      const pct = pMaxX > 0 ? this.x / pMaxX : 0
+      minProtein.value = Math.round(pct * proteinMax)
+      gsap.set(pFill, { width: `${pct * 100}%` })
+    },
+  })
+
+  // servings slider
+  const sTrack = document.getElementById('servings-track')
+  const sFill = document.getElementById('servings-fill')
+  const sHandle = document.getElementById('servings-handle')
+  const sWidth = sTrack?.offsetWidth || 240
+  const sMaxX = Math.max(sWidth - 26, 0)
+  const sInitialPct = minServings.value / servingsMax
+  const sInitialX = Math.round(sInitialPct * sMaxX)
+  gsap.set(sFill, { width: `${sInitialPct * 100}%` })
+  gsap.set(sHandle, { x: sInitialX })
+  Draggable.create(sHandle, {
+    type: 'x',
+    bounds: { minX: 0, maxX: sMaxX },
+    onDrag() {
+      const pct = sMaxX > 0 ? this.x / sMaxX : 0
+      minServings.value = Math.round(pct * servingsMax)
+      gsap.set(sFill, { width: `${pct * 100}%` })
+    },
+  })
+
+  // cost slider
+  const cTrack = document.getElementById('cost-track')
+  const cFill = document.getElementById('cost-fill')
+  const cHandle = document.getElementById('cost-handle')
+  const cWidth = cTrack?.offsetWidth || 240
+  const cMaxX = Math.max(cWidth - 26, 0)
+  const cInitialPct = maxCostPerServing.value / costMax
+  const cInitialX = Math.round(cInitialPct * cMaxX)
+  gsap.set(cFill, { width: `${cInitialPct * 100}%` })
+  gsap.set(cHandle, { x: cInitialX })
+  Draggable.create(cHandle, {
+    type: 'x',
+    bounds: { minX: 0, maxX: cMaxX },
+    onDrag() {
+      const pct = cMaxX > 0 ? this.x / cMaxX : 0
+      maxCostPerServing.value = Math.round(pct * costMax * 100) / 100
+      gsap.set(cFill, { width: `${pct * 100}%` })
+    },
+  })
+
   gsap.from('.sidebar', { x: -200, duration: 1 })
   gsap.from('.listings-panel', { opacity: 0, duration: 1.2 })
 })
@@ -205,6 +313,34 @@ onMounted(async () => {
 }
 
 #slider-handle {
+  width: 26px;
+  height: 26px;
+  background: white;
+  border-radius: 50%;
+  position: absolute;
+  top: -7px;
+  left: 0;
+  cursor: grab;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+}
+
+#protein-track, #servings-track, #cost-track {
+  width: 100%;
+  height: 12px;
+  background: white;
+  border-radius: 50px;
+  position: relative;
+  margin-top: 18px;
+}
+
+#protein-fill, #servings-fill, #cost-fill {
+  width: 0;
+  height: 100%;
+  background: orange;
+  border-radius: 50px;
+}
+
+#protein-handle, #servings-handle, #cost-handle {
   width: 26px;
   height: 26px;
   background: white;
