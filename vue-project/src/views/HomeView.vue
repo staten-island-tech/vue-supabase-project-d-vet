@@ -18,7 +18,29 @@
           <button class="big-btn" @click="goCreate">Post</button>
         </div>
       </section>
+      <div class="hidden-toggle-row">
+        <button class="show-hidden-btn" @click="toggleShowHidden">
+          {{ showHidden ? 'Hide hidden' : 'Show hidden' }}
+        </button>
+      </div>
       <p>Wishlist count: {{ wishlistListings.length }}</p>
+      <section v-if="showHidden" class="wishlist-section">
+        <div class="section-title">Your Hidden Listings</div>
+        <div v-if="!authStore.isSignedIn" class="empty">Sign in to see your hidden listings.</div>
+        <div v-else-if="hiddenLoading" class="empty">Loading hidden listings...</div>
+        <div v-else-if="hiddenListings.length === 0" class="empty">No hidden listings yet.</div>
+        <div v-else class="grid">
+          <div v-for="it in hiddenListings" :key="it.id" class="card">
+            <div class="thumb" :style="it.image_url ? `background-image:url(${it.image_url})` : ''" @click="openItem(it)">
+              <div v-if="!it.image_url" class="noimg">No image</div>
+            </div>
+            <div class="info">
+              <div class="title" @click="openItem(it)">{{ it.title }}</div>
+              <button class="remove-btn" @click.stop="removeFromHidden(it.id)">Remove</button>
+            </div>
+          </div>
+        </div>
+      </section>
       <section class="wishlist-section">
         <div class="section-title">Your Wishlist</div>
         <div v-if="!authStore.isSignedIn" class="empty">Sign in to see your saved listings.</div>
@@ -41,17 +63,21 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import { useWishlistStore } from '@/stores/wishlistStore'
 import { storeToRefs } from 'pinia'
+import { supabase } from '@/supabase'
 
 const router = useRouter()
 const authStore = useAuthStore()
 const wishlistStore = useWishlistStore()
 const q = ref('')
 const loading = ref(false)
+const showHidden = ref(false)
+const hiddenListings = ref([])
+const hiddenLoading = ref(false)
 const { wishlistListings, loading: wishlistLoading } =
   storeToRefs(wishlistStore)
 // const wishlistListings = wishlistStore.wishlistListings
@@ -62,8 +88,56 @@ async function fetchListings() {
   loading.value = true
   try {
     await wishlistStore.loadWishlist()
+    if (showHidden.value) {
+      await loadHiddenListings()
+    }
   } finally {
     loading.value = false
+  }
+}
+
+async function loadHiddenListings() {
+  if (!authStore.user?.id) {
+    hiddenListings.value = []
+    return
+  }
+
+  hiddenLoading.value = true
+
+  try {
+    const { data: hiddenRows, error: hiddenRowsError } = await supabase
+      .from('hidden_listings')
+      .select('listing_id')
+      .eq('user_id', authStore.user.id)
+
+    if (hiddenRowsError) throw hiddenRowsError
+
+    const listingIds = (hiddenRows || []).map((row) => row.listing_id).filter(Boolean)
+
+    if (!listingIds.length) {
+      hiddenListings.value = []
+      return
+    }
+
+    const { data: listings, error: listingsError } = await supabase
+      .from('listings')
+      .select('id,title,ingredients,price_per_serving,time_to_make,image_url,description,created_at,user_id,kcal_per_serving,protein_per_serving,carbs_per_serving,fat_per_serving,fiber_per_serving,sugar_per_serving,sodium_per_serving')
+      .in('id', listingIds)
+
+    if (listingsError) throw listingsError
+    hiddenListings.value = listings || []
+  } catch (err) {
+    console.error('Unable to load hidden listings', err)
+    hiddenListings.value = []
+  } finally {
+    hiddenLoading.value = false
+  }
+}
+
+function toggleShowHidden() {
+  showHidden.value = !showHidden.value
+  if (showHidden.value && authStore.isSignedIn) {
+    loadHiddenListings()
   }
 }
 
@@ -81,6 +155,22 @@ async function removeFromWishlist(listingId) {
   console.log('REMOVE SUCCESS', success)
 }
 
+async function removeFromHidden(listingId) {
+  if (!authStore.user?.id || !listingId) return
+
+  const { error } = await supabase
+    .from('hidden_listings')
+    .delete()
+    .match({
+      user_id: authStore.user.id,
+      listing_id: listingId,
+    })
+
+  if (!error) {
+    hiddenListings.value = hiddenListings.value.filter((item) => item.id !== listingId)
+  }
+}
+
 function goLogin() {
   router.push({ name: 'login' }).catch(() => {})
 }
@@ -88,8 +178,11 @@ function goRegister() { router.push({ name: 'register' }).catch(() => {}) }
 function goView() { router.push({ name: 'human-listing' }).catch(() => {}) }
 function goCreate() { router.push({ name: 'create-listing' }).catch(() => {}) }
 
-watch(() => authStore.user?.id, () => {
-  wishlistStore.loadWishlist()
+watch(() => authStore.user?.id, async () => {
+  await wishlistStore.loadWishlist()
+  if (showHidden.value) {
+    await loadHiddenListings()
+  }
 }, { immediate: true })
 
 onMounted(() => {
@@ -111,6 +204,8 @@ onMounted(() => {
 .search input { flex: 1; padding: 8px 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.03); background: var(--panel); color: var(--muted); }
 .search button, .login { background: var(--accent); border: none; padding: 8px 10px; border-radius: 8px; color: #022; cursor: pointer; }
 .content { padding: 18px; }
+.hidden-toggle-row { margin: 8px 0 12px; }
+.show-hidden-btn { background: #f59e0b; color: #111827; border: none; padding: 8px 12px; border-radius: 8px; font-weight: 700; cursor: pointer; }
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; }
 .card { background: rgba(255,255,255,0.02); border-radius: 10px; overflow: hidden; border: 1px solid rgba(255,255,255,0.02); }
 .thumb { height: 120px; background-size: cover; background-position: center; display: flex; align-items: center; justify-content: center; background: #081022; color: var(--muted); cursor: pointer; }

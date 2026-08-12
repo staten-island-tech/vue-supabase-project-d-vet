@@ -43,6 +43,9 @@
         <button class="animate-in wishlist-btn" :disabled="!authStore.isSignedIn || isWishlisted" @click="addToWishlist">
           {{ isWishlisted ? 'Saved to Wishlist' : (authStore.isSignedIn ? 'Add to Wishlist' : 'Sign in to save') }}
         </button>
+        <button class="animate-in hide-btn" :disabled="!authStore.isSignedIn" @click="hideListing">
+          {{ authStore.isSignedIn ? 'Hide for me' : 'Sign in to hide' }}
+        </button>
         <p v-if="wishlistMessage" class="animate-in wishlist-message">{{ wishlistMessage }}</p>
       </div>
     </main>
@@ -154,6 +157,25 @@ async function addToWishlist() {
 
   const success = await wishlistStore.addToWishlist(listing.value.id)
   wishlistMessage.value = success ? 'Added to your wishlist.' : 'This listing is already in your wishlist.'
+}
+
+async function hideListing() {
+  if (!listing.value?.id) return
+  const userId = authStore.user?.id
+  if (!userId) {
+    alert('Please sign in to hide this listing for yourself.')
+    return
+  }
+
+  const { error } = await supabase.from('hidden_listings').insert([
+    { user_id: userId, listing_id: listing.value.id },
+  ])
+
+  if (error) {
+    console.error('Failed to hide listing', error)
+  } else {
+    router.push({ name: 'human-listing' }).catch(() => {})
+  }
 }
 
 function goBack() {
@@ -344,6 +366,16 @@ onMounted(() => {
 .wishlist-message {
   color: #7ef6d0;
   margin: 0;
+}
+
+.hide-btn {
+  margin-top: 8px;
+  padding: 8px 12px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: transparent;
+  color: #fff;
+  border-radius: 10px;
+  cursor: pointer;
 }
 
 .empty-state {

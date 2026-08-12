@@ -42,6 +42,7 @@
               <div class="price" v-if="listing.price_per_serving">
                 ${{ listing.price_per_serving }} / serving
               </div>
+              <button class="hide-btn" @click.stop="hideListing($event, listing.id)">Hide</button>
             </div>
           </div>
         </div>
@@ -56,6 +57,7 @@ import { useRouter } from 'vue-router'
 import { supabase } from '@/supabase'
 import gsap from 'gsap'
 import Draggable from 'gsap/Draggable'
+import { useAuthStore } from '@/stores/authStore'
 
 
 gsap.registerPlugin(Draggable)
@@ -85,6 +87,7 @@ const applyFilters = () => {
 }
 
 const router = useRouter()
+const authStore = useAuthStore()
 function goHome() {
   router.push({ name: 'home' }).catch(() => {})
 }
@@ -95,12 +98,48 @@ function openItem(item) {
 }
 
 async function loadListings() {
+  // fetch any listings the current user has hidden, then fetch listings and
+  // exclude those locally so the hide action is per-user only
+  const currentUserId = authStore.user?.id
+  let hiddenIds = []
+  if (currentUserId) {
+    const { data: hidden, error: hiddenError } = await supabase
+      .from('hidden_listings')
+      .select('listing_id')
+      .eq('user_id', currentUserId)
+
+    if (!hiddenError && Array.isArray(hidden) && hidden.length) {
+      hiddenIds = hidden.map((h) => h.listing_id)
+    }
+  }
+
   const { data, error } = await supabase
     .from('listings')
     .select('*')
     .order('created_at', { ascending: false })
 
-  listings.value = error ? [] : (data ?? [])
+  const all = error ? [] : (data ?? [])
+  listings.value = hiddenIds.length ? all.filter((l) => !hiddenIds.includes(l.id)) : all
+}
+
+async function hideListing(evt, listingId) {
+  evt.stopPropagation()
+  const userId = authStore.user?.id
+  if (!userId) {
+    // prompt to sign in
+    alert('Please sign in to hide listings for yourself.')
+    return
+  }
+
+  const { error } = await supabase.from('hidden_listings').insert([
+    { user_id: userId, listing_id: listingId },
+  ])
+
+  if (error) {
+    console.error('Failed to hide listing', error)
+  } else {
+    listings.value = listings.value.filter((l) => l.id !== listingId)
+  }
 }
 
 onMounted(async () => {
@@ -327,5 +366,19 @@ onMounted(async () => {
 .price {
   color: #7ef6d0;
   font-weight: 700;
+}
+
+.hide-btn {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.08);
+  color: #fff;
+  padding: 6px 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.hide-btn:hover {
+  opacity: 0.9;
 }
 </style>
