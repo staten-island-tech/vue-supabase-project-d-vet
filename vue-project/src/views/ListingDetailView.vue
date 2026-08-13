@@ -46,6 +46,32 @@
         <button class="animate-in hide-btn" :disabled="!authStore.isSignedIn" @click="hideListing">
           {{ authStore.isSignedIn ? 'Hide for me' : 'Sign in to hide' }}
         </button>
+        <div v-if="isOwner" class="owner-controls">
+          <button v-if="!editMode" class="hide-btn" @click="startEdit">Edit</button>
+          <button v-if="!editMode" class="hide-btn" @click="deleteListing">Delete</button>
+        </div>
+
+        <div v-if="editMode" class="edit-form">
+          <input v-model="editFields.title" placeholder="Title" />
+          <input v-model.number="editFields.price_per_serving" type="number" step="0.01" placeholder="Price per serving" />
+          <input v-model.number="editFields.time_to_make" type="number" placeholder="Time to make (minutes)" />
+          <input v-model.number="editFields.servings" type="number" placeholder="Servings" />
+          <input v-model="editFields.image_url" placeholder="Image URL" />
+          <textarea v-model="editFields.description" placeholder="Description"></textarea>
+          <textarea v-model="editFields.ingredients" placeholder="Ingredients, one per line"></textarea>
+          <input v-model.number="editFields.kcal_per_serving" type="number" placeholder="Kcal per serving" />
+          <input v-model.number="editFields.protein_per_serving" type="number" placeholder="Protein per serving (g)" />
+          <input v-model.number="editFields.carbs_per_serving" type="number" placeholder="Carbs per serving (g)" />
+          <input v-model.number="editFields.fat_per_serving" type="number" placeholder="Fat per serving (g)" />
+          <input v-model.number="editFields.fiber_per_serving" type="number" placeholder="Fiber per serving (g)" />
+          <input v-model.number="editFields.sugar_per_serving" type="number" placeholder="Sugar per serving (g)" />
+          <input v-model.number="editFields.sodium_per_serving" type="number" placeholder="Sodium per serving (mg)" />
+          <input v-model="editFields.credits" placeholder="Credits" />
+          <div class="edit-actions">
+            <button class="hide-btn" @click="saveEdit">Save</button>
+            <button class="hide-btn" @click="cancelEdit">Cancel</button>
+          </div>
+        </div>
         <p v-if="wishlistMessage" class="animate-in wishlist-message">{{ wishlistMessage }}</p>
         <div v-if="listing.credits" class="credits animate-in">
           <div class="section-title">Credits</div>
@@ -77,6 +103,78 @@ const listing = ref(null)
 const posterEmailValue = ref('')
 const loading = ref(false)
 const wishlistMessage = ref('')
+const editMode = ref(false)
+const isOwner = computed(() => listing.value && authStore.user && listing.value.user_id === authStore.user.id)
+
+// editable copies
+const editFields = ref({})
+
+function startEdit() {
+  if (!isOwner.value) return
+  editFields.value = {
+    title: listing.value.title || '',
+    price_per_serving: listing.value.price_per_serving || null,
+    time_to_make: listing.value.time_to_make || null,
+    servings: listing.value.servings || null,
+    image_url: listing.value.image_url || '',
+    description: listing.value.description || '',
+    ingredients: listing.value.ingredients || '',
+    kcal_per_serving: listing.value.kcal_per_serving || null,
+    protein_per_serving: listing.value.protein_per_serving || null,
+    carbs_per_serving: listing.value.carbs_per_serving || null,
+    fat_per_serving: listing.value.fat_per_serving || null,
+    fiber_per_serving: listing.value.fiber_per_serving || null,
+    sugar_per_serving: listing.value.sugar_per_serving || null,
+    sodium_per_serving: listing.value.sodium_per_serving || null,
+    credits: listing.value.credits || '',
+  }
+  editMode.value = true
+}
+
+function cancelEdit() {
+  editMode.value = false
+  editFields.value = {}
+}
+
+async function saveEdit() {
+  if (!listing.value || !isOwner.value) return
+  const payload = { ...editFields.value }
+  try {
+    const { data, error } = await supabase
+      .from('listings')
+      .update(payload)
+      .eq('id', listing.value.id)
+      .eq('user_id', authStore.user.id)
+      .select()
+      .maybeSingle()
+
+    if (error) throw error
+    if (data) {
+      listing.value = data
+    }
+    editMode.value = false
+  } catch (err) {
+    console.error('Failed to save listing', err)
+    wishlistMessage.value = err?.message || 'Unable to save changes.'
+  }
+}
+
+async function deleteListing() {
+  if (!listing.value || !isOwner.value) return
+  if (!confirm('Delete this listing? This cannot be undone.')) return
+  try {
+    const { error } = await supabase
+      .from('listings')
+      .delete()
+      .match({ id: listing.value.id, user_id: authStore.user.id })
+
+    if (error) throw error
+    router.push({ name: 'human-listing' }).catch(() => {})
+  } catch (err) {
+    console.error('Failed to delete listing', err)
+    wishlistMessage.value = err?.message || 'Unable to delete listing.'
+  }
+}
 
 const postedOn = computed(() => {
   if (!listing.value?.created_at) return 'Unknown'
@@ -384,6 +482,30 @@ onMounted(() => {
   color: #dfe8f2;
   line-height: 1.5;
 }
+
+.owner-controls {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.edit-form {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.edit-form input,
+.edit-form textarea {
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.03);
+  color: #fff;
+}
+
+.edit-actions { display: flex; gap: 8px; }
 
 .hide-btn {
   margin-top: 8px;
